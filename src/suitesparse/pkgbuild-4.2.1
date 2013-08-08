@@ -1,0 +1,134 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=suitesparse
+pkgver=4.2.1
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/SuiteSparse
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.cise.ufl.edu/research/sparse/SuiteSparse/SuiteSparse-${pkgver}.tar.gz
+  tar xvfz SuiteSparse-${pkgver}.tar.gz
+  popd
+
+  pushd $srcdir
+  patch -Np1 -i $REPO/src/suitesparse/metis_idxtype.diff
+  patch -Np1 -i $REPO/src/suitesparse/metis_path.diff
+  popd
+}
+
+configure()
+{
+  pushd $srcdir/SuiteSparse_config
+  cat <<EOF > SuiteSparse_config.mk
+RANLIB = ranlib
+ARCHIVE = \$(AR) \$(ARFLAGS)
+CP = cp -f
+MV = mv -f
+CC = gcc
+F77 = gfortran
+F77LIB =
+LIB = -lm -lrt
+INSTALL_LIB = $destdir/lib
+INSTALL_INCLUDE = $destdir/include
+MAKE = make
+BLAS = -L$ATLAS_DIR/lib -lblas
+LAPACK = -L$ATLAS_DIR/lib -llapack
+XERBLA = 
+GPU_BLAS_PATH =
+GPU_CONFIG =
+METIS_PATH = $METIS_DIR
+METIS = $METIS_DIR/lib
+UMFPACK_CONFIG =
+CHOLMOD_CONFIG = \$(GPU_CONFIG)
+SPQR_CONFIG =
+TBB =
+F77FLAGS = -march=native -O3 -m64 -fPIC
+CF = \$(CFLAGS) -march=native -O3 -fexceptions -m64 -fPIC
+CLEAN = *.o *.obj *.ln *.bb *.bbg *.da *.tcov *.gcov gmon.out *.bak *.d *.gcda *.gcno
+EOF
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make default
+  popd
+}
+
+make_shlib()
+{
+  local libname=$(basename ${1%.*})
+  local soversion=$(ls -1 ${libname}.*.a| sed "s/${libname}.//" | sed "s/.a//")
+  local soname=${libname}.so.${soversion}
+  local sonamemajor=${libname}.so.$(echo $soversion | cut -d"." -f1)
+    
+  echo "Building ${libname} ..."
+  shift
+    
+  gcc ${LDFLAGS} -shared -Wl,-soname,${sonamemajor} \
+    -Wl,--whole-archive ${libname}.a -Wl,--no-whole-archive \
+    "$@" -o ${soname}
+    
+  ln -svf ${soname} ${libname}.so
+  ln -svf ${soname} ${sonamemajor}
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  mkdir -pv $destdir/{include,lib}
+  make install
+  popd
+
+  pushd $destdir/lib
+  # shared libraries
+  make_shlib libsuitesparseconfig.a -lrt
+  make_shlib libamd.a -L. -lsuitesparseconfig -lm
+  make_shlib libcolamd.a -L. -lsuitesparseconfig -lm
+  make_shlib libccolamd.a -L. -lsuitesparseconfig -lm
+  make_shlib libcamd.a -L. -lsuitesparseconfig -lm
+  make_shlib libcholmod.a -lm -L. -lsuitesparseconfig \
+    -lamd -lcolamd -lccolamd -lcamd \
+    -L$METIS_DIR/lib -lmetis
+  make_shlib libumfpack.a -lm -L. -lsuitesparseconfig \
+    -lcholmod -L$ATLAS_DIR/lib \
+    -llapack -lcblas -lf77blas -latlas -lpthread -lgfortran
+  make_shlib libbtf.a -L. -lsuitesparseconfig -lm
+  make_shlib libcxsparse.a -L. -lsuitesparseconfig -lm
+  make_shlib libklu.a -L. -lsuitesparseconfig -lm
+  make_shlib librbio.a -L. -lsuitesparseconfig -lm
+  make_shlib libspqr.a -L. -lsuitesparseconfig -lm
+  make_shlib libldl.a -L. -lsuitesparseconfig -lm
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+SUITESPARSE_DIR=\$REPO/$reldir
+PATH=\$SUITESPARSE_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$SUITESPARSE_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

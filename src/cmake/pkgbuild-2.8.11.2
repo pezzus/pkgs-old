@@ -1,0 +1,82 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=cmake
+pkgver=2.8.11.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.cmake.org/files/v2.8/${pkgname}-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  [ -d $srcdir/build ] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+ 
+  export CMAKE_PREFIX_PATH="$LIBARCHIVE_DIR:$LIBEXPAT_DIR:$ZLIB_DIR:$BZIP2_DIR:$NCURSES_DIR"
+  ../bootstrap \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --docdir=$destdir/share/doc \
+    --system-zlib \
+    --system-expat \
+    --system-bzip2 \
+    --system-libarchive
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+
+  vimpath="$destdir/share/vim/vimfiles"
+  install -Dm644 $srcdir/Docs/cmake-indent.vim \
+    $vimpath/indent/cmake-indent.vim
+  install -Dm644 $srcdir/Docs/cmake-syntax.vim \
+    $vimpath/syntax/cmake-syntax.vim
+  install -Dm644 $srcdir/Docs/cmake-mode.el \
+    $destdir/share/emacs/site-lisp/cmake-mode.el
+
+  pushd $destdir
+  cat << EOF > setenv
+CMAKE_DIR=\$REPO/$reldir
+PATH=\$CMAKE_DIR/bin:\$PATH
+MANPATH=\$CMAKE_DIR/share/man:\$MANPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

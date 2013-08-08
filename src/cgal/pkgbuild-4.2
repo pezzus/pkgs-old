@@ -1,0 +1,70 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=cgal
+pkgver=4.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/CGAL-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N https://gforge.inria.fr/frs/download.php/32360/CGAL-4.2.tar.bz2
+  tar xvfj CGAL-$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  export GMP_DIR
+  export MPFR_DIR
+  export BOOST_ROOT=$BOOST_DIR
+  cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D CMAKE_PREFIX_PATH:STRING="$ZLIB_DIR" \
+    -D WITH_ZLIB:BOOL=ON \
+    ..
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+CGAL_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$CGAL_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+build
+package
+clean

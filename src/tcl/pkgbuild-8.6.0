@@ -1,0 +1,73 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=tcl
+pkgver=8.6.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname$pkgver/unix
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://downloads.sourceforge.net/sourceforge/tcl/tcl${pkgver}-src.tar.gz
+  tar xvfz $pkgname$pkgver-src.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --enable-threads \
+    --enable-64bit
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  make test
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install install-private-headers
+  popd
+  pushd $destdir
+  
+  find "$destdir" -name '*.a' -type f -exec chmod 644 {} \;
+  ln -sf tclsh8.6 "${destdir}/bin/tclsh"
+
+  cat << EOF > setenv
+TCL_DIR=\$REPO/$reldir
+PATH=\$TCL_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$TCL_DIR/bin:\$LD_LIBRARY_PATH
+MANPATH=\$TCL_DIR/share/man:\$MANPATH
+PKG_CONFIG_PATH=\$TCL_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

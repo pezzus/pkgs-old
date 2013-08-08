@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=glibc
+pkgver=2.17
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.gnu.org/gnu/libc/$pkgname-$pkgver.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  [ -d "$srcdir/build" ] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+  ../configure \
+    --prefix=$destdir \
+    --enable-kernel=2.6.18
+  popd
+}
+
+#prepare
+configure

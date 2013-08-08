@@ -1,0 +1,68 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=libmpc
+pkgver=1.0.1
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/mpc-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.multiprecision.org/mpc/download/mpc-${pkgver/_/-}.tar.gz
+  tar xvfz mpc-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+	--with-gmp=$GMP_DIR \
+	--with-mpfr=$MPFR_DIR
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  make check
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+LIBMPC_DIR=\$REPO/$reldir
+INFOPATH=\$LIBMPC_DIR/share/info:\$INFOPATH
+LD_LIBRARY_PATH=\$LIBMPC_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

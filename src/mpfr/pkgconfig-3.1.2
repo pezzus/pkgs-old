@@ -1,0 +1,68 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=mpfr
+pkgver=3.1.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.mpfr.org/mpfr-current/mpfr-${pkgver}.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+    --enable-thread-safe \
+    --enable-shared \
+    --with-gmp=$GMP_DIR
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+MPFR_DIR=\$REPO/$reldir
+INFOPATH=\$MPFR_DIR/share/info:\$INFOPATH
+LD_LIBRARY_PATH=\$MPFR_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

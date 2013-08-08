@@ -1,0 +1,77 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=lzo2
+pkgver=2.06
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/lzo-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.oberhumer.com/opensource/lzo/download/lzo-${pkgver}.tar.gz
+  tar xvfz lzo-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  # out of source doesn't work
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    --enable-shared
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+
+  # build minilzo
+  gcc $CFLAGS -fpic -Iinclude/lzo \
+    -o minilzo/minilzo.o -c minilzo/minilzo.c
+  gcc $LDFLAGS -shared -o libminilzo.so.0 \
+    -Wl,-soname,libminilzo.so.0 minilzo/minilzo.o
+
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+
+  # install minilzo
+  install -m 755 libminilzo.so.0 $destdir/lib
+  install -p -m 644 minilzo/minilzo.h $destdir/include/lzo
+  cd $destdir/lib
+  ln -s libminilzo.so.0 libminilzo.so
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+LZO2_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$LZO2_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

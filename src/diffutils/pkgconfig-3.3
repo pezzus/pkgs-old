@@ -1,0 +1,62 @@
+#!/bin/bash
+
+REPO=/data/scratch/simone/repo
+
+pkgname=diffutils
+pkgver=3.3
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.gnu.org/gnu/diffutils/$pkgname-$pkgver.tar.xz
+  tar xvfJ $pkgname-$pkgver.tar.xz
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+  ../configure \
+    --prefix=$destdir
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

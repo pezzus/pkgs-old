@@ -1,0 +1,79 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=armadillo
+pkgver=3.900.7
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://downloads.sourceforge.net/sourceforge/arma/$pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+
+  pushd $srcdir
+  patchdir=$REPO/src/armadillo
+  patch -Np1 -i $patchdir/disable_mkl.patch
+  patch -Np1 -i $patchdir/cmake_paths.patch
+  popd
+}
+
+configure()
+{
+  # out-of-source compile brakes the library at
+  # linking stage!
+  mkdir -pv $srcdir && pushd $srcdir
+  export BOOST_ROOT=$BOOST_DIR
+  export BLAS_DIR=$ATLAS_DIR
+  export CBLAS_DIR=$ATLAS_DIR
+  export CLAPACK_DIR=$ATLAS_DIR
+  export LAPACK_DIR=$ATLAS_DIR
+  cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    .
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  # install new one
+  pushd $srcdir
+  make install
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+ARMADILLO_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$ARMADILLO_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

@@ -1,0 +1,121 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=ncurses
+pkgver=5.9
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+destdir=$REPO/opt/$pkgname-$pkgver
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.gnu.org/gnu/ncurses/$pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  export PKG_CONFIG_LIBDIR="$destdir/lib/pkgconfig"
+  mkdir -pv $PKG_CONFIG_LIBDIR
+  
+  mkdir -pv $srcdir/wbuild && pushd $srcdir/wbuild
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --includedir=$destdir/include \
+    --with-shared \
+    --with-normal \
+    --without-debug \
+    --without-ada \
+    --enable-widec \
+    --enable-pc-files \
+    --enable-ext-colors \
+    --enable-ext-mouse
+  popd
+
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --includedir=$destdir/include \
+    --with-shared \
+    --with-normal \
+    --without-debug \
+    --without-ada \
+    --with-chtype=long
+  popd
+
+}
+
+build()
+{
+  pushd $srcdir/wbuild
+  make  
+  rm -f misc/pc-files
+  make
+  popd
+  
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/wbuild
+  make install
+  popd
+
+  # fool packages looking to link to non-wide-character ncurses libraries
+  for lib in ncurses form panel menu; do
+    echo "INPUT(-l${lib}w)" >${destdir}/lib/lib${lib}.so
+    ln -sv lib${lib}w.a ${destdir}/lib/lib${lib}.a
+  done
+  ln -sv libncurses++w.a ${destdir}/lib/libncurses++.a
+
+  for lib in ncurses ncurses++ form panel menu; do
+    ln -sv ${lib}w.pc ${destdir}/lib/pkgconfig/${lib}.pc
+  done
+
+  # some packages look for -lcurses during build
+  echo "INPUT(-lncursesw)" >${destdir}/lib/libcursesw.so
+  ln -s libncurses.so ${destdir}/lib/libcurses.so
+  ln -s libncursesw.a ${destdir}/lib/libcursesw.a
+  ln -s libncurses.a ${destdir}/lib/libcurses.a
+
+  # non-widec compatibility libraries
+  cd ${srcdir}/build
+  for lib in ncurses form panel menu; do
+    install -Dm755 lib/lib${lib}.so.${pkgver} ${destdir}/lib/lib${lib}.so.${pkgver}
+    ln -sv lib${lib}.so.${pkgver} ${destdir}/lib/lib${lib}.so.5
+  done
+  
+  pushd $destdir
+  cat << EOF > setenv
+NCURSES_DIR=\$REPO/opt/$pkgname-$pkgver
+PATH=\$NCURSES_DIR/bin:\$PATH
+MANPATH=\NCURSES_DIR/share/man:\$MANPATH
+PKG_CONFIG_PATH=\$NCURSES_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+LD_LIBRARY_PATH=\$NCURSES_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

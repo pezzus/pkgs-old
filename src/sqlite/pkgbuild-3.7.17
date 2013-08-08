@@ -1,0 +1,79 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=sqlite
+pkgver=3.7.17
+_pkgver=3071700
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-autoconf-$_pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.sqlite.org/2013/sqlite-autoconf-$_pkgver.tar.gz
+  tar xvfz $pkgname-autoconf-$_pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    --disable-static
+  popd
+
+  pushd $srcdir/tea
+  ./configure \
+    --prefix=$destdir \
+    --with-system-sqlite \
+    --with-tcl=$TCL_DIR/lib \
+    --with-tclinclude=$TCL_DIR/include
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+  pushd $srcdir/tea
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  cd tea
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+LD_LIBRARY_PATH=\$REPO/$reldir/lib:\$LD_LIBRARY_PATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+PKG_CONFIG_PATH=\$REPO/$reldir/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

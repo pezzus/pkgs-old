@@ -1,0 +1,95 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=git
+pkgver=1.8.3.4
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://git-core.googlecode.com/files/git-$pkgver.tar.gz
+  wget -N http://git-core.googlecode.com/files/git-manpages-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-manpages-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  echo "no config"
+}
+
+build()
+{
+  pushd $srcdir
+  export PYTHON_PATH=$PYTHON_DIR/bin/python
+  make prefix=$destdir gitexecdir=$destdir/lib/git-core \
+    EXPATDIR=$LIBEXPAT_DIR \
+    NO_CROSS_DIRECTORY_HARDLINKS=1 \
+    NO_R_TO_GCC_LINKER=1 \
+    V=1 \
+    all
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  install -d $destdir/lib
+  ln -svf lib $destdir/lib64
+
+  # install new one
+  pushd $srcdir
+  export PYTHON_PATH=$PYTHON_DIR/bin/python
+  make prefix=$destdir gitexecdir=$destdir/lib/git-core \
+    EXPATDIR=$LIBEXPAT_DIR \
+    NO_CROSS_DIRECTORY_HARDLINKS=1 \
+    NO_R_TO_GCC_LINKER=1 \
+    V=1 \
+    install
+  # bash completion
+  mkdir -p $destdir/share/bash-completion/completions/
+  install -m644 ./contrib/completion/git-completion.bash \
+                $destdir/share/bash-completion/completions/git
+  # fancy git prompt
+  mkdir -p $destdir/share/git/
+  install -m644 ./contrib/completion/git-prompt.sh \
+                $destdir/share/git/git-prompt.sh
+
+  popd
+
+  # manpages
+  for mansect in man1 man5 man7; do
+    for manpage in "$srcdir"/../$mansect/*; do
+      install -D -m644 $manpage $destdir/share/man/$mansect/$(basename $manpage)
+    done
+  done
+
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

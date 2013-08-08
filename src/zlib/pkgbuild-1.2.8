@@ -1,0 +1,65 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=zlib
+pkgver=1.2.8
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://zlib.net/current/zlib-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  # out of source doesn't work
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+ZLIB_DIR=\$REPO/$reldir
+MANPATH=\$ZLIB_DIR/share/man:\$MANPATH
+LD_LIBRARY_PATH=\$ZLIB_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$ZLIB_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

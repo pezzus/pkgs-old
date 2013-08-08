@@ -1,0 +1,67 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=libjpeg-turbo
+pkgver=1.3.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://sourceforge.net/projects/$pkgname/files/$pkgver/$pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    --with-jpeg8 \
+    --mandir=$destdir/share/man
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  install -m644 jpegint.h "$destdir/include/"
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+LIBJPEG_DIR=\$REPO/$reldir
+MANPATH=\$LIBJPEG_DIR/share/man:\$MANPATH
+LD_LIBRARY_PATH=\$LIBJPEG_DIR/lib:\$LD_LIBRARY_PATH
+PATH=\$LIBJPEG_DIR/bin:\$PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

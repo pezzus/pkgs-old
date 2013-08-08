@@ -1,0 +1,15 @@
+--- armadillo-3.900.2/CMakeLists.txt.orig	2013-08-08 11:27:06.636709931 +0200
++++ armadillo-3.900.2/CMakeLists.txt	2013-08-08 11:27:50.433378198 +0200
+@@ -73,9 +73,9 @@
+ else()
+   set(ARMA_OS unix)
+   
+-  include(ARMA_FindMKL)
+-  include(ARMA_FindACMLMP)
+-  include(ARMA_FindACML)
++  #include(ARMA_FindMKL)
++  #include(ARMA_FindACMLMP)
++  #include(ARMA_FindACML)
+   
+   message(STATUS "   MKL_FOUND   = ${MKL_FOUND}")
+   message(STATUS "ACMLMP_FOUND   = ${ACMLMP_FOUND}")

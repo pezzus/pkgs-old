@@ -1,0 +1,70 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=gawk
+pkgver=4.1.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N ftp://ftp.gnu.org/pub/gnu/gawk/${pkgname}-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+    --libexecdir=$destdir/lib \
+    --without-libsigsegv \
+    --with-readline=$READLINE_DIR \
+    --with-mpfr=$MPFR_DIR
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+GAWK_DIR=\$REPO/$reldir
+PATH=\$GAWK_DIR/bin:\$PATH
+MANPATH=\$GAWK_DIR/share/man:\$MANPATH
+INFOPATH=\$GAWK_DIR/share/info:\$INFOPATH
+LD_LIBRARY_PATH=\$GAWK_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

@@ -1,0 +1,104 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=boost
+pkgver=1.54.0
+_boostver=${pkgver//./_} 
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/${pkgname}_${_boostver}
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://downloads.sourceforge.net/${pkgname}/${pkgname}_${_boostver}.tar.gz
+  tar xvfz ${pkgname}_${_boostver}.tar.gz
+  popd
+
+  pushd $srcdir
+  patch -Np2 -i $REPO/src/boost/int128-detection.patch
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  
+  echo "using gcc ;" >> ./tools/build/v2/user-config.jam
+  echo "using python : $PYTHON_DIR/bin/python : $PYTHON_DIR/include/python2.7 : $PYTHON_DIR/lib ;" >> ./tools/build/v2/user-config.jam
+  echo "using mpi ;" >> ./tools/build/v2/user-config.jam
+
+  ./bootstrap.sh \
+	--with-toolset=gcc \
+	--with-icu=$ICU_DIR \
+	--with-python=$PYTHON_DIR/bin/python
+
+  popd
+}
+
+build()
+{
+  echo "nothing to do"
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  # install new one
+  pushd $srcdir
+
+  _bindir="bin.linuxx86_64"
+  install -d -m 755 $destdir/bin
+  install $srcdir/tools/build/v2/engine/${_bindir}/bjam $destdir/bin/bjam
+
+  pushd tools
+  for _tool in bcp inspect quickbook compiler_status process_jam_log wave; do
+    $destdir/bin/bjam --toolset=gcc $_tool
+  done
+
+  $destdir/bin/bjam --toolset=gcc cflags="-std=gnu++11" library_status
+  popd
+  cp -a dist/bin/* $destdir/bin
+
+  # boostbook is needed by quickbook
+  install -d -m 755 $destdir/share/boostbook
+  cp -a tools/boostbook/{xsl,dtd} $destdir/share/boostbook/
+
+  $destdir/bin/bjam \
+    variant=release \
+    debug-symbols=off \
+    threading=multi \
+    runtime-link=shared \
+    link=shared \
+    toolset=gcc \
+    python=2.7 \
+    --layout=system \
+    --prefix=$destdir \
+    install 
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+BOOST_DIR=\$REPO/$reldir
+PATH=\$BOOST_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$BOOST_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

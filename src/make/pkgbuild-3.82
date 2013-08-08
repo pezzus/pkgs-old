@@ -1,0 +1,80 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=make
+pkgver=3.82
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.gnu.org/gnu/make/$pkgname-$pkgver.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+
+  pushd $srcdir
+  patchdir=$REPO/src/make
+  patch -Np1 -i $patchdir/make-3.82-bug30612.patch
+  patch -Np1 -i $patchdir/make-3.82-bug30723.patch
+  patch -Np1 -i $patchdir/make-3.82-sort-blank.patch
+  patch -Np0 -i $patchdir/make-3.82-makeflags.patch
+  patch -Np0 -i $patchdir/make-3.82-expensive_glob.patch
+  patch -Np0 -i $patchdir/make-3.82-dont-prune-intermediate.patch
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+  ../configure \
+    --prefix=$destdir
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
+EOF
+  popd
+
+  # override system gmake
+  pushd $destdir/bin
+  #ln -svf make gmake
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

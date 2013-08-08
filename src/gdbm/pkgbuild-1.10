@@ -1,0 +1,69 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=gdbm
+pkgver=1.10
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N ftp://ftp.gnu.org/gnu/gdbm/${pkgname}-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --infodir=$destdir/share/info \
+    --enable-libgdbm-compat
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+GDBM_DIR=\$REPO/$reldir
+PATH=\$GDBM_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$GDBM_DIR/bin:\$LD_LIBRARY_PATH
+MANPATH=\$GDBM_DIR/share/man:\$MANPATH
+INFOPATH=\$GDBM_DIR/share/info:\$INFOPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

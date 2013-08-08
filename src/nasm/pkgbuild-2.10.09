@@ -1,0 +1,70 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=nasm
+pkgver=2.10.09
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.nasm.us/pub/nasm/releasebuilds/${pkgver}/${pkgname}-${pkgver}.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  make -C doc info
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install install_rdf
+  install -dm775 $destdir/share/info
+  install -m664 doc/info/* $destdir/share/info
+
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+NASM_DIR=\$REPO/$reldir
+PATH=\$NASM_DIR/bin:\$PATH
+INFOPATH=\$NASM_DIR/share/info:\$INFOPATH
+LD_LIBRARY_PATH=\$NASM_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$NASM_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

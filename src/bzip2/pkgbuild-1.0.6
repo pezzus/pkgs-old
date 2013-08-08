@@ -1,0 +1,71 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=bzip2
+pkgver=1.0.6
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget http://www.bzip.org/$pkgver/bzip2-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+
+  # add large-file support
+  sed -e 's/^CFLAGS=\(.*\)$/CFLAGS=\1 \$(BIGFILES)/' -i ./Makefile-libbz2_so
+
+  # use our optimization
+  sed -i "s|-O2|-O2 -march=native|g" Makefile
+  sed -i "s|-O2|-O2 -march=native|g" Makefile-libbz2_so
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make -f Makefile-libbz2_so
+  make bzip2 bzip2recover libbz2.a
+  make test
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make PREFIX=$destdir install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+BZIP2_DIR=\$REPO/$reldir
+PATH=\$BZIP2_DIR/bin:\$PATH
+MANPATH=\$BZIP2_DIR/share/man:\$MANPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

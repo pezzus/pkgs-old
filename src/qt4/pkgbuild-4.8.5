@@ -1,0 +1,115 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=qt4
+pkgver=4.8.5
+
+_pkgfqn="qt-everywhere-opensource-src-${pkgver}"
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/${_pkgfqn}
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://download.qt-project.org/official_releases/qt/4.8/${pkgver}/${_pkgfqn}.tar.gz
+  tar xvfz ${_pkgfqn}.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+
+  export QT4DIR=$srcdir
+  export LD_LIBRARY_PATH=${QT4DIR}/lib:${LD_LIBRARY_PATH}
+
+  ./configure \
+    -L "$UNIXODBC_DIR/lib" \
+    -I "$UNIXODBC_DIR/include" \
+    -L "$SQLITE_DIR/lib" \
+    -I "$SQLITE_DIR/include" \
+    -L "$ICU_DIR/lib" \
+    -I "$ICU_DIR/include" \
+    -L "$ZLIB_DIR/lib" \
+    -I "$ZLIB_DIR/include" \
+    -L "$LIBTIFF_DIR/lib" \
+    -I "$LIBTIFF_DIR/include" \
+    -L "$LIBPNG_DIR/lib" \
+    -I "$LIBPNG_DIR/include" \
+    -L "$LIBJPEG_DIR/lib" \
+    -I "$LIBJPEG_DIR/include" \
+    -confirm-license \
+    -opensource \
+    -prefix $destdir \
+    -docdir ${destdir}/share/doc/qt \
+    -plugindir ${destdir}/lib/qt/plugins \
+    -importdir ${destdir}/lib/qt/imports \
+    -datadir ${destdir}/share/qt \
+    -translationdir ${destdir}/share/qt/translations \
+    -examplesdir ${destdir}/share/doc/qt/examples \
+    -demosdir ${destdir}/share/doc/qt/demos \
+    -plugin-sql-{sqlite3,odbc} \
+    -no-phonon \
+    -no-phonon-backend \
+    -no-webkit \
+    -nomake demos \
+    -nomake examples \
+    -nomake docs \
+    -no-rpath \
+    -optimized-qmake \
+    -no-dbus \
+    -openssl-linked \
+    -graphicssystem raster \
+    -reduce-relocations \
+    -gtkstyle \
+    -opengl \
+    -v \
+    -no-openvg \
+    -no-cups \
+    -system-{sqlite,zlib,libtiff,libpng,libjpeg}
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+QT4_DIR=\$REPO/$reldir
+PATH=\$QT4_DIR/bin:\$PATH
+MANPATH=\$QT4_DIR/share/man:\$MANPATH
+LD_LIBRARY_PATH=\$QT4_DIR/man:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$QT4_DIR/man/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

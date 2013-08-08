@@ -1,0 +1,73 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=libffi
+pkgver=3.0.13
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N ftp://sourceware.org/pub/libffi/libffi-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+    --disable-static
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  mkdir -pv $destdir/lib
+  pushd $destdir
+  ln -sfv lib lib64
+  popd
+
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+LIBFFI_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$LIBFFI_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$LIBFFI_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+MANPATH=\$LIBFFI_DIR/share/man:\$MANPATH
+INFOPATH=\$LIBFFI_DIR/share/info:\$INFOPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

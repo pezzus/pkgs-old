@@ -1,0 +1,89 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=binutils
+pkgver=2.23.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.gnu.org/gnu/binutils/$pkgname-$pkgver.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  pushd $pkgname-$pkgver
+  sed -i -e 's/@colophon/@@colophon/' \
+         -e 's/doc@cygnus.com/doc@@cygnus.com/' bfd/doc/bfd.texinfo   
+  popd
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  #CFLAGS="${CFLAGS} -I$ZLIB_DIR/include" \
+  #LDFLAGS="${LDFLAGS} -L$ZLIB_DIR/lib" \
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --infodir=$destdir/share/info \
+    --enable-shared \
+    --enable-64-bit-bfd \
+    --disable-nls \
+    --disable-multilib \
+    --enable-threads \
+    --enable-plugins \
+    --enable-ld=default \
+    --enable-gold
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  
+  make configure-host
+  
+  make tooldir=$destdir
+  
+  make -k check
+  
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # lib64 symlink
+  mkdir -pv $destdir/lib && ln -svf lib64 $destdir/lib
+  # install new one
+  pushd $srcdir/build
+  make tooldir=$destdir install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

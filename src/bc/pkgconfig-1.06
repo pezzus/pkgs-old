@@ -1,0 +1,75 @@
+#!/bin/bash
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=bc
+pkgver=1.06
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N ftp://ftp.gnu.org/gnu/${pkgname}/${pkgname}-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+
+  pushd $srcdir
+  patch -Np1 -i $REPO/src/bc/build-fix.patch
+  patch -Np1 -i $REPO/src/bc/bc-1.06-info-dir-entry.patch
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  export CFLAGS="$CFLAGS -I$READLINE_DIR/include"
+  export LDFLAGS="$LDFLAGS -L$READLINE_DIR/lib"
+
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --infodir=$destdir/share/info \
+    --with-readline=yes
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO_DIR/$reldir/bin:\$PATH
+MANPATH=\$REPO_DIR/$reldir/share/man:\$MANPATH
+INFOPATH=\$REPO_DIR/$reldir/share/info:\$INFOPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

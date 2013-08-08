@@ -1,0 +1,65 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=python-nose
+pkgver=1.3.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/nose-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://pypi.python.org/packages/source/n/nose/nose-${pkgver}.tar.gz \
+    --no-check-certificate
+  tar xvfz nose-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  python setup.py config
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  python setup.py build
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  mkdir -pv $destdir/lib/python$_pythonver/site-packages
+  export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
+  python setup.py install --prefix=$destdir --optimize=1
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

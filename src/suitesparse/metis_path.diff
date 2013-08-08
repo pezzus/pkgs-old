@@ -1,0 +1,68 @@
+--- SuiteSparse/CHOLMOD/Lib/Makefile.old	2013-04-22 11:49:42.250374275 +0200
++++ SuiteSparse/CHOLMOD/Lib/Makefile	2013-04-22 11:50:25.423707339 +0200
+@@ -30,9 +30,9 @@
+                 # METIS is requested.  See if it is available
+                 ifeq ($(METIS_PATH), $(wildcard $(METIS_PATH)))
+                     # METIS is available
+-                    LIB_WITH_PARTITION = $(METIS) \
++                    LIB_WITH_PARTITION = -L$(METIS_PATH) -lmetis \
+                         ../../CCOLAMD/Lib/libccolamd.a ../../CAMD/Lib/libcamd.a
+-                    I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                    I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                         -I../../CCOLAMD/Include -I../../CAMD/Include
+                     CONFIG =
+                 endif
+--- SuiteSparse/CHOLMOD/Demo/Makefile.old	2013-04-22 12:07:07.447034686 +0200
++++ SuiteSparse/CHOLMOD/Demo/Makefile	2013-04-22 12:07:52.713701082 +0200
+@@ -31,9 +31,9 @@
+                 # METIS is requested.  See if it is available
+                 ifeq ($(METIS_PATH), $(wildcard $(METIS_PATH)))
+                     # METIS is available
+-                    LIB_WITH_PARTITION = $(METIS) \
++                    LIB_WITH_PARTITION = -L$(METIS_MATH)/lib -lmetis \
+                         ../../CCOLAMD/Lib/libccolamd.a ../../CAMD/Lib/libcamd.a
+-                    I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                    I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                         -I../../CCOLAMD/Include -I../../CAMD/Include
+                     CONFIG =
+                 endif
+@@ -98,10 +98,6 @@
+ 	( cd ../../CCOLAMD ; $(MAKE) library )
+ 	( cd ../../CAMD ; $(MAKE) library )
+ endif
+-ifneq (,$(findstring -DNPARTITION, $(CONFIG)))
+-else
+-	( cd $(METIS_PATH) && $(MAKE) )
+-endif
+
+ #-------------------------------------------------------------------------------
+
+--- SuiteSparse/UMFPACK/Demo/Makefile.old	2013-04-22 12:23:23.827028853 +0200
++++ SuiteSparse/UMFPACK/Demo/Makefile	2013-04-22 12:31:01.157026122 +0200
+@@ -36,10 +36,10 @@
+                     ifeq (../../CAMD, $(wildcard ../../CAMD))
+                         ifeq (../../CCOLAMD, $(wildcard ../../CCOLAMD))
+                             # METIS, CAMD, and CCOLAMD are available
+-                            LIB_WITH_PARTITION = $(METIS) \
++                            LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
+                                 ../../CCOLAMD/Lib/libccolamd.a \
+                                 ../../CAMD/Lib/libcamd.a
+-                            I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
++                            I_WITH_PARTITION = -I$(METIS_PATH)/include \
+                                 -I../../CCOLAMD/Include -I../../CAMD/Include
+                             CONFIG2 =
+                         endif
+@@ -80,12 +80,9 @@
+ ../../CAMD/Lib/libcamd.a:
+ 	- ( cd ../../CAMD && $(MAKE) library )
+ 
+-$(METIS):
+-	( cd $(METIS_PATH) && $(MAKE) )
+-
+ UMFPACK = ../Lib/libumfpack.a ../../AMD/Lib/libamd.a \
+     ../../SuiteSparse_config/libsuitesparseconfig.a \
+-    $(LIB_WITH_CHOLMOD) $(LIB_WITH_PARTITION)
++    $(LIB_WITH_CHOLMOD)
+ 
+ libs: $(UMFPACK)
+ 

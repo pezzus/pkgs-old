@@ -1,0 +1,146 @@
+diff -Nru armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindBLAS.cmake armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindBLAS.cmake
+--- armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindBLAS.cmake	2011-05-15 17:54:39.000000000 +0200
++++ armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindBLAS.cmake	2013-06-07 17:19:05.978964211 +0200
+@@ -8,8 +8,18 @@
+ SET(BLAS_NAMES ${BLAS_NAMES} blas)
+ FIND_LIBRARY(BLAS_LIBRARY
+   NAMES ${BLAS_NAMES}
+-  PATHS /usr/lib64/atlas /usr/lib/atlas /usr/lib64 /usr/lib /usr/local/lib64 /usr/local/lib
+-  )
++  HINTS
++    ${BLAS_DIR}
++    ENV BLAS_DIR
++  PATH_SUFFIXES lib
++  PATHS
++    /usr/lib64/atlas
++    /usr/lib/atlas
++    /usr/lib64
++    /usr/lib
++    /usr/local/lib64
++    /usr/local/lib
++)
+ 
+ IF (BLAS_LIBRARY)
+   SET(BLAS_LIBRARIES ${BLAS_LIBRARY})
+diff -Nru armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindCBLAS.cmake armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindCBLAS.cmake
+--- armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindCBLAS.cmake	2012-05-28 15:53:45.000000000 +0200
++++ armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindCBLAS.cmake	2013-06-07 17:22:17.811258300 +0200
+@@ -7,17 +7,39 @@
+ #  CBLAS_LIBRARY, where to find the library.
+ 
+ FIND_PATH(CBLAS_INCLUDE_DIR cblas.h
+-/usr/include/atlas/
+-/usr/local/include/atlas/
+-/usr/include/
+-/usr/local/include/
++  HINTS
++    ${CBLAS_DIR}
++    ENV CBLAS_DIR
++  PATH_SUFFIXES include
++  PATHS
++    /usr/include/atlas/
++    /usr/local/include/atlas/
++    /usr/include/
++    /usr/local/include/
+ )
+ 
+ SET(CBLAS_NAMES ${CBLAS_NAMES} cblas)
+ FIND_LIBRARY(CBLAS_LIBRARY
+   NAMES ${CBLAS_NAMES}
+-  PATHS /usr/lib64/atlas-sse3 /usr/lib64/atlas /usr/lib64 /usr/local/lib64/atlas /usr/local/lib64 /usr/lib/atlas-sse3 /usr/lib/atlas-sse2 /usr/lib/atlas-sse /usr/lib/atlas-3dnow /usr/lib/atlas /usr/lib /usr/local/lib/atlas /usr/local/lib
+-  )
++  HINTS
++    ${CBLAS_DIR}
++    ENV CBLAS_DIR
++  PATH_SUFFIXES lib
++  PATHS 
++    /usr/lib64/atlas-sse3 
++    /usr/lib64/atlas 
++    /usr/lib64 
++    /usr/local/lib64/atlas 
++    /usr/local/lib64 
++    /usr/lib/atlas-sse3 
++    /usr/lib/atlas-sse2
++    /usr/lib/atlas-sse
++    /usr/lib/atlas-3dnow
++    /usr/lib/atlas
++    /usr/lib
++    /usr/local/lib/atlas
++    /usr/local/lib
++)
+ 
+ IF (CBLAS_LIBRARY AND CBLAS_INCLUDE_DIR)
+     SET(CBLAS_LIBRARIES ${CBLAS_LIBRARY})
+diff -Nru armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindCLAPACK.cmake armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindCLAPACK.cmake
+--- armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindCLAPACK.cmake	2012-05-28 15:53:45.000000000 +0200
++++ armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindCLAPACK.cmake	2013-06-07 17:23:03.714342955 +0200
+@@ -7,18 +7,39 @@
+ #  CLAPACK_LIBRARY, where to find the library.
+ 
+ FIND_PATH(CLAPACK_INCLUDE_DIR clapack.h
+-/usr/include/atlas/
+-/usr/local/include/atlas/
+-/usr/include/
+-/usr/local/include/
++  HINTS
++    ${CLAPACK_DIR}
++    ENV CLAPACK_DIR
++  PATH_SUFFIXES include
++  PATHS
++    /usr/include/atlas/
++    /usr/local/include/atlas/
++    /usr/include/
++    /usr/local/include/
+ )
+ 
+ SET(CLAPACK_NAMES ${CLAPACK_NAMES} lapack_atlas)
+ SET(CLAPACK_NAMES ${CLAPACK_NAMES} clapack)
+ FIND_LIBRARY(CLAPACK_LIBRARY
+   NAMES ${CLAPACK_NAMES}
+-  PATHS /usr/lib64/atlas-sse3 /usr/lib64/atlas /usr/lib64 /usr/local/lib64/atlas /usr/local/lib64 /usr/lib/atlas-sse3 /usr/lib/atlas-sse2 /usr/lib/atlas-sse /usr/lib/atlas-3dnow /usr/lib/atlas /usr/lib /usr/local/lib/atlas /usr/local/lib
+-  )
++  HINTS
++    ${CLAPACK_DIR}
++    ENV CLAPACK_DIR
++  PATH_SUFFIXES lib
++  PATHS
++    /usr/lib64/atlas-sse3
++    /usr/lib64/atlas
++    /usr/lib64
++    /usr/local/lib64/atlas
++    /usr/local/lib64
++    /usr/lib/atlas-sse3
++    /usr/lib/atlas-sse2
++    /usr/lib/atlas-sse
++    /usr/lib/atlas-3dnow
++    /usr/lib/atlas /usr/lib
++    /usr/local/lib/atlas
++    /usr/local/lib
++)
+ 
+ IF (CLAPACK_LIBRARY AND CLAPACK_INCLUDE_DIR)
+     SET(CLAPACK_LIBRARIES ${CLAPACK_LIBRARY})
+diff -Nru armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindLAPACK.cmake armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindLAPACK.cmake
+--- armadillo-3.900.2.orig/build_aux/cmake/Modules/ARMA_FindLAPACK.cmake	2011-05-15 17:54:39.000000000 +0200
++++ armadillo-3.900.2/build_aux/cmake/Modules/ARMA_FindLAPACK.cmake	2013-06-07 17:22:46.561102549 +0200
+@@ -8,8 +8,18 @@
+ SET(LAPACK_NAMES ${LAPACK_NAMES} lapack)
+ FIND_LIBRARY(LAPACK_LIBRARY
+   NAMES ${LAPACK_NAMES}
+-  PATHS /usr/lib64/atlas /usr/lib/atlas /usr/lib64 /usr/lib /usr/local/lib64 /usr/local/lib
+-  )
++  HINTS
++    ${LAPACK_DIR}
++    ENV LAPACK_DIR
++  PATH_SUFFIXES lib
++  PATHS
++    /usr/lib64/atlas
++    /usr/lib/atlas
++    /usr/lib64
++    /usr/lib
++    /usr/local/lib64
++    /usr/local/lib
++)
+ 
+ IF (LAPACK_LIBRARY)
+   SET(LAPACK_LIBRARIES ${LAPACK_LIBRARY})

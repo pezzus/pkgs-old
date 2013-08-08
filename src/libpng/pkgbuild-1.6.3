@@ -1,0 +1,84 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=libpng
+pkgver=1.6.3
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.xz
+  wget -N http://downloads.sourceforge.net/sourceforge/$pkgname-apng/$pkgname-$pkgver-apng.patch.gz
+  tar xvfJ $pkgname-$pkgver.tar.xz
+  gzip --decompress $pkgname-$pkgver-apng.patch.gz
+  popd
+
+  pushd $srcdir
+  patch -Np1 -i ../$pkgname-$pkgver-apng.patch
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    CFLAGS="$CFLAGS -I$ZLIB_DIR/include" \
+    CPPFLAGS="$CPPFLAGS -I$ZLIB_DIR/include" \
+    LDFLAGS="$LDFLAGS -L$ZLIB_DIR/lib"
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  cd contrib/pngminus
+  make \
+    PNGINC="-I$destdir/include/libpng16" \
+    PNGLIB="-L$destdir/lib -lpng16" \
+    PNGLIBS="$destdir/lib/libpng16.a" \
+    ZINC="-I$ZLIB_DIR/include" \
+    ZLIB="-L$ZLIB_DIR/lib -lz" \
+    ZLIBS="$ZLIB_DIR/lib/libz.a" \
+    -f makefile.std png2pnm pnm2png
+  install -m755 png2pnm pnm2png "$destdir/bin/"
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+LIBPNG_DIR=\$REPO/$reldir
+PATH=\$LIBPNG_DIR/bin:\$PATH
+MANPATH=\$LIBPNG_DIR/share/info:\$MANPATH
+LD_LIBRARY_PATH=\$LIBPNG_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$LIBPNG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

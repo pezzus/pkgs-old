@@ -1,0 +1,124 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=atlas
+pkgver=3.10.1
+_lapackver=3.4.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/ATLAS
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://downloads.sourceforge.net/math-atlas/atlas${pkgver}.tar.bz2
+  wget -N http://www.netlib.org/lapack/lapack-$_lapackver.tgz
+  tar xvfj atlas$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  [ -d $srcdir/build ] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  _mhzfloat=`cat /proc/cpuinfo | grep "cpu MHz" | head -1 | sed -e 's/^.*: //'`
+  _mhz=`echo "($_mhzfloat+0.5)/1" | bc`
+
+  ../configure \
+    --prefix=$destdir \
+    --with-netlib-lapack-tarfile=$tmpdir/lapack-${_lapackver}.tgz \
+    --shared \
+    -b 64 \
+    -D c -DPentiumCPS=$_mhz
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  pushd lib
+  make libclapack.a
+  make libptclapack.a
+  popd
+  make check
+  make ptcheck
+  make time
+  popd
+}
+
+make_shlib()
+{
+  libname=$(basename ${1%.*})
+  soname=${libname}.so.3
+  echo "Building ${libname} ..."
+  shift
+  gcc ${LDFLAGS} -shared -Wl,-soname=${soname} \
+    -Wl,--whole-archive ${libname}.a -Wl,--no-whole-archive \
+    "$@" -o ${soname}
+  ln -svf ${soname} ${soname%.*}
+}
+
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  pushd lib
+  install -m 644 lib{,pt}clapack.a $destdir/lib
+  install -m 644 libptlapack.a $destdir/lib
+  popd
+
+  pushd $destdir/lib
+  mv -v lib{,st}cblas.a
+  mv -v lib{,st}clapack.a
+  mv -v lib{,st}f77blas.a
+  mv -v lib{,st}lapack.a
+
+  make_shlib libatlas.a -lm -lpthread
+  make_shlib libstcblas.a -lm -L. -latlas
+  make_shlib libptcblas.a -lm -L. -latlas -lpthread
+  make_shlib libstclapack.a -lm -L. -latlas -lstcblas
+  make_shlib libptclapack.a -lm -L. -latlas -lptcblas -lpthread
+  make_shlib libstf77blas.a -lm -L. -latlas -lgfortran
+  make_shlib libptf77blas.a -lm -L. -latlas -lpthread -lgfortran
+  make_shlib libstlapack.a -lm -L. -latlas -lstcblas -lstf77blas -lgfortran
+  make_shlib libptlapack.a -lm -L. -latlas -lptcblas -lptf77blas -lpthread -lgfortran
+
+  for ext in a so so.3; do
+    ln -svf lib{pt,}cblas.$ext
+    ln -svf lib{pt,}f77blas.$ext
+    ln -svf lib{pt,}clapack.$ext
+    ln -svf lib{pt,}lapack.$ext
+    ln -svf libf77blas.$ext libblas.$ext
+  done
+
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+ATLAS_DIR=\$REPO/$reldir
+PATH=\$ATLAS_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$ATLAS_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

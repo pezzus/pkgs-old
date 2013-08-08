@@ -1,0 +1,75 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=cloog
+pkgver=0.18.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.bastoul.net/cloog/pages/download/$pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  pushd $srcdir
+  patch -Np1 -i $REPO/src/cloog/cloog-0.18.0-isl-0.11.2.patch
+  popd
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+	--enable-shared \
+	--with-gmp=system \
+	--with-gmp-prefix=$GMP_DIR \
+	--with-isl=system \
+	--with-isl-prefix=$ISL_DIR
+  
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  make check
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+CLOOG_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$CLOOG_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$CLOOG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean
