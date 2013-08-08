@@ -1,0 +1,100 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=hdf5
+pkgver=1.8.11
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${pkgver}.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+
+  pushd $srcdir
+  patchdir=$REPO/src/${pkgname}
+  patch -Np1 -i $patchdir/hdf5-1.8.10-buildsystem.patch
+  patch -Np1 -i $patchdir/hdf5-1.8.10-implicits.patch
+  patch -Np1 -i $patchdir/hdf5-1.8.8-array_bounds.patch
+  patch -Np1 -i $patchdir/hdf5-1.8.9-mpicxx.patch
+  popd
+}
+
+configure()
+{
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  # enable shared libs by default for h5cc config utility
+  sed -i -e "s/SHLIB:-no/SHLIB:-yes/g" ../tools/misc/h5cc.in
+
+  ../configure \
+    CXX="mpicxx" \
+    CC="mpicc" \
+    FC="mpif90" \
+    F9X="mpif90" \
+    RUNPARALLEL="mpirun" \
+    OMPI_MCA_disable_memory_allocator=1 \
+    --prefix=$destdir \
+    --with-pthread=/usr/lib/ \
+    --enable-linux-lfs \
+    --enable-unsupported \
+    --enable-shared \
+    --disable-static \
+    --enable-production=yes \
+    --with-zlib=$ZLIB_DIR \
+    --with-default-api-version=v18 \
+    --enable-parallel=yes \
+    --enable-cxx \
+    --disable-sharedlib-rpath
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+HDF5_DIR=\$REPO/$reldir
+PATH=\$HDF5_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$HDF5_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+
+  # override system gmake
+  pushd $destdir/bin
+  #ln -svf make gmake
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+clean

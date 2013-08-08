@@ -80,6 +80,7 @@ setpkg libpng 1.6.3
 setpkg qt4 4.8.5
 setpkg cgal 4.2
 setpkg git 1.8.3.4
+setpkg hdf5 1.8.11
 
 export PATH=${PATH%:}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH%:}
