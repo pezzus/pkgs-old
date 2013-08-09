@@ -1,0 +1,68 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=scalapack
+pkgver=2.0.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
+  tar xvfz $pkgname-$pkgver.tgz
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D LAPACK_LIBRARIES:STRING="$ATLAS_DIR/lib/liblapack.so.3" \
+    -D BLAS_LIBRARIES:STRING="$ATLAS_DIR/lib/libblas.so.3" \
+    ..
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+SCALAPACK_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$SCALAPACK_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+build
+package
+clean
+

@@ -1,0 +1,74 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=netcdf
+pkgver=4.3.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    CC=mpicc \
+    FC=mpif90 \
+    CXX=mpicxx \
+    --prefix=$destdir \
+    --enable-shared \
+    --enable-netcdf-4 \
+    CPPFLAGS="-I$ZLIB_DIR/include -I$HDF5_DIR/include" \
+    LDFLAGS="-L$ZLIB_DIR/lib -L$HDF5_DIR/lib"
+    
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+NETCDF_DIR=\$REPO/$reldir
+PATH=\$NETCDF_DIR/bin:\$PATH
+MANPATH=\$NETCDF_DIR/share/man:\$MANPATH
+LD_LIBRARY_PATH=\$NETCDF_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+build
+package
+clean

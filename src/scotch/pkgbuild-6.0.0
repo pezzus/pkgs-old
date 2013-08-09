@@ -1,0 +1,91 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=scotch
+pkgver=6.0.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/scotch_${pkgver}_esmumps/src
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N https://gforge.inria.fr/frs/download.php/31832/scotch_${pkgver}_esmumps.tar.gz
+  tar xvfz scotch_${pkgver}_esmumps.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  cat <<EOF > Makefile.inc
+EXE =
+LIB = .so
+OBJ = .o
+
+MAKE = make
+AR = gcc
+ARFLAGS = -shared -o
+CAT = cat
+CCS = gcc
+CCP = mpicc
+CCD = gcc
+CFLAGS = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -Drestrict=__restrict -DINTSIZE32
+CLIBFLAGS = -I$ZLIB_DIR/include -shared -fPIC
+LDFLAGS = -L$ZLIB_DIR/lib -lz -lm -lrt -lpthread
+CP = cp
+LEX = flex -Pscotchyy -olex.yy.c
+LN = ln
+MKDIR = mkdir
+MV = mv
+RANLIB = echo
+YACC = bison -pscotchyy -y -b y
+EOF
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make scotch
+  make esmumps
+  make ptscotch
+  make ptesmumps
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  for dir in {bin,lib,include}; do
+    install -d $destdir/$dir
+    install -m 755 $srcdir/../$dir/* $destdir/$dir
+  done
+
+  rm $destdir/{include,lib}/*metis*
+
+  pushd $destdir
+  cat << EOF > setenv
+SCOTCH_DIR=\$REPO/$reldir
+PATH=\$SCOTCH_DIR/bin:\$PATH
+LD_LIBRARY_PATH=\$SCOTCH_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean
