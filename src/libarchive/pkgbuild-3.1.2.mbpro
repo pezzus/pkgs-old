@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=libarchive
 pkgver=3.1.2
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://libarchive.org/downloads/$pkgname-$pkgver.tar.gz
+  curl -O http://libarchive.org/downloads/$pkgname-$pkgver.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   pushd $srcdir
   patch -Np1 -i $REPO/src/libarchive/filename-calc.patch
@@ -25,8 +22,8 @@ prepare()
 configure()
 {
   pushd $srcdir
-  CPPFLAGS="-I$ZLIB_DIR/include -I$BZIP2_DIR/include -I$XZ_DIR/include -I$LZO2_DIR/include -I$LIBEXPAT_DIR/include" \
-  LDFLAGS="-L$ZLIB_DIR/lib -L$BZIP2_DIR/lib -L$XZ_DIR/lib -L$LZO2_DIR/lib -L$LIBEXPAT_DIR/lib" \
+  #CPPFLAGS="-I$ZLIB_DIR/include -I$BZIP2_DIR/include -I$XZ_DIR/include -I$LZO2_DIR/include -I$LIBEXPAT_DIR/include" \
+  #LDFLAGS="-L$ZLIB_DIR/lib -L$BZIP2_DIR/lib -L$XZ_DIR/lib -L$LZO2_DIR/lib -L$LIBEXPAT_DIR/lib" \
   ./configure \
     --prefix=$destdir \
     --without-xml2
@@ -50,7 +47,7 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-LIBARCHIVE_DIR=\$REPO/$reldir
+export LIBARCHIVE_DIR=\$REPO/$reldir
 PATH=\$LIBARCHIVE_DIR/bin:\$PATH
 MANPATH=\$LIBARCHIVE_DIR/share/man:\$MANPATH
 LD_LIBRARY_PATH=\$LIBARCHIVE_DIR/lib:\$LD_LIBRARY_PATH

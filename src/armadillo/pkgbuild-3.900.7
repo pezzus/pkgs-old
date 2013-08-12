@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=armadillo
 pkgver=3.900.7
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/sourceforge/arma/$pkgname-$pkgver.tar.gz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/arma/$pkgname-$pkgver.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 
@@ -30,11 +27,11 @@ configure()
   # out-of-source compile brakes the library at
   # linking stage!
   mkdir -pv $srcdir && pushd $srcdir
-  export BOOST_ROOT=$BOOST_DIR
-  export BLAS_DIR=$ATLAS_DIR
-  export CBLAS_DIR=$ATLAS_DIR
-  export CLAPACK_DIR=$ATLAS_DIR
-  export LAPACK_DIR=$ATLAS_DIR
+  #export BOOST_ROOT=$BOOST_DIR
+  #export BLAS_DIR=$ATLAS_DIR
+  #export CBLAS_DIR=$ATLAS_DIR
+  #export CLAPACK_DIR=$ATLAS_DIR
+  #export LAPACK_DIR=$ATLAS_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     .
@@ -74,6 +71,6 @@ clean()
 
 prepare
 configure
-build
-package
-clean
+#build
+#package
+#clean
