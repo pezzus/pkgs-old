@@ -1,0 +1,112 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=mumps
+pkgver=4.10.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/MUMPS_${pkgver}-p3
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.mcs.anl.gov/pub/petsc/externalpackages/MUMPS_${pkgver}-p3.tar.gz
+  tar xvfz MUMPS_${pkgver}-p3.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  cat <<EOF > Makefile.inc
+SCOTCHDIR = $SCOTCH_DIR
+ISCOTCH   = -I\$(SCOTCHDIR)/include
+LSCOTCH   = -L\$(SCOTCHDIR)/lib -lptesmumps -lesmumps -lptscotch -lscotch -lscotcherr -lz -lrt
+
+LPORDDIR  = \$(topdir)/PORD/lib
+IPORD     = -I\$(topdir)/PORD/include
+LPORD     = -L\$(LPORDDIR) -lpord
+
+IMETIS    = -I$METIS_DIR/include -I$PARMETIS_DIR/include
+LMETIS    = -L$PARMETIS_DIR/lib -lparmetis -L$METIS_DIR/lib -lmetis
+
+ORDERINGSF = -Dpord -Dparmetis -Dmetis -Dscotch -Dptscotch
+ORDERINGSC = \$(ORDERINGSF)
+
+LORDERINGS = \$(LSCOTCH) \$(LPORD) \$(LMETIS)
+IORDERINGSF = \$(ISCOTCH)
+IORDERINGSC = \$(ISCOTCH) \$(IMETIS) \$(IPORD)
+
+PLAT    =
+LIBEXT  = .a
+OUTC    = -o 
+OUTF    = -o 
+RM = /bin/rm -f
+CC = mpicc
+FC = mpif90
+FL = mpif90
+AR = ar vr 
+RANLIB = ranlib
+SCALAP = -L$SCALAPACK_DIR/lib -lscalapack
+INCPAR =
+LIBPAR = \$(SCALAP)
+# See point 17 in the FAQ to have more details on the compilation of mpich with gfortran
+INCSEQ =
+LIBSEQ =
+LIBBLAS = -L$ATLAS_DIR/lib -llapack -lblas
+LIBOTHERS = -lpthread
+#Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
+CDEFS   = -DAdd_
+
+#Begin Optimized options
+OPTF    = -fPIC -O3 -march=native -DALLOW_NON_INIT
+OPTL    = -fPIC -O3 -march=native
+OPTC    = -fPIC -O3 -march=native
+#End Optimized options
+INCS = \$(INCPAR)
+LIBS = \$(LIBPAR)
+LIBSEQNEEDED =
+EOF
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make all
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  for dir in {lib,include}; do
+    install -d $destdir/$dir
+    install -m 755 $srcdir/$dir/* $destdir/$dir
+  done
+
+  rm $destdir/lib/dummy
+
+  pushd $destdir
+  cat << EOF > setenv
+MUMPS_DIR=\$REPO/$reldir
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean
