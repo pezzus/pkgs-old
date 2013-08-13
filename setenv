@@ -91,6 +91,13 @@ setpkg swig 2.0.10
 setpkg superlu 4.3
 setpkg superlu_dist 3.3
 setpkg trilinos 11.4.1
+setpkg petsc 3.4.2
+setpkg python-ufl dev
+setpkg python-uflacs dev
+setpkg python-ffc dev
+setpkg python-fiat dev
+setpkg python-instant dev
+setpkg python-ufc dev
 
 export PATH=${PATH%:}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH%:}
