@@ -1,0 +1,104 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=superlu_dist
+pkgver=3.3
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/SuperLU_DIST_${pkgver}
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://crd-legacy.lbl.gov/~xiaoye/SuperLU/${pkgname}_${pkgver}.tar.gz
+  tar xvfz ${pkgname}_${pkgver}.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  cat <<EOF > make.inc
+DSuperLUroot = $srcdir
+DSUPERLULIB  = \$(DSuperLUroot)/lib/libsuperlu_dist.a.${pkgver}
+
+BLASDEF   = -DUSE_VENDOR_BLAS
+BLASLIB   = -L$ATLAS_DIR/lib -lblas
+
+METISLIB      = -L$METIS_DIR/lib -lmetis
+PARMETISLIB   = -L$PARMETIS_DIR/lib -lparmetis
+
+FLIBS   =
+LIBS    = \$(DSUPERLULIB) \$(BLASLIB) \$(PARMETISLIB) \$(METISLIB)
+
+ARCH         = ar
+ARCHFLAGS    = cr
+RANLIB       = echo
+
+CC           = mpicc
+CFLAGS       = -DDEBUGlevel=0 -DPRNTlevel=1 -DPROFlevel=0 -O3 -fPIC
+NOOPTS       = -O0 -fPIC
+FORTRAN      = mpif90
+FFLAGS       = -O3 -fPIC
+LOADER       = \$(CC)
+LOADOPTS     =
+CDEFS        = -DAdd_
+EOF
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make lib
+
+  # shared lib
+  gcc -shared -Wl,-soname=lib$pkgname.so.3 \
+      -Wl,--whole-archive $srcdir/lib/lib$pkgname.a.$pkgver \
+      -Wl,--allow-multiple-definition \
+      -Wl,--no-whole-archive \
+        -L$PARMETIS_DIR/lib -lparmetis \
+        -L$METIS_DIR/lib -lmetis \
+        -L$ATLAS_DIR/lib -lblas -lm \
+      -o $srcdir/lib/lib$pkgname.so.$pkgver
+
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  install -d $destdir/lib
+  install -m 755 $srcdir/lib/* $destdir/lib
+  ln -svf lib$pkgname.so.$pkgver $destdir/lib/lib$pkgname.so
+  ln -svf lib$pkgname.so.$pkgver $destdir/lib/lib$pkgname.so.3
+
+  install -d $destdir/include
+  install -m 644 $srcdir/SRC/*.h $destdir/include
+
+  rm -v $destdir/include/{html_mainpage,old_colamd}.h
+
+  pushd $destdir
+  cat << EOF > setenv
+SUPERLUDIST_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$SUPERLUDIST_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

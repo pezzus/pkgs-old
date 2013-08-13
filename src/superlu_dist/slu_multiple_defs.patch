@@ -1,0 +1,18 @@
+--- SuperLU_DIST_3.3/SRC/Makefile.orig	2013-08-13 01:39:09.821281086 -0700
++++ SuperLU_DIST_3.3/SRC/Makefile	2013-08-13 01:40:57.050437419 -0700
+@@ -66,11 +66,15 @@
+ all:  double complex16
+ 
+ double: $(DSLUSRC) $(DPLUSRC) $(ALLAUX) $(LAAUX)
++	objcopy --localize-symbol=readrhs dreadMM{,2}.o
++	mv dreadMM{2,}.o
+ 	$(ARCH) $(ARCHFLAGS) $(DSUPERLULIB) \
+ 		$(DSLUSRC) $(DPLUSRC) $(ALLAUX) $(LAAUX)
+ 	$(RANLIB) $(DSUPERLULIB)
+ 
+ complex16: $(ZSLUSRC) $(ZPLUSRC) $(ALLAUX) $(LAAUX)
++	objcopy --localize-symbol=readrhs zreadMM{,2}.o
++	mv zreadMM{2,}.o
+ 	$(ARCH) $(ARCHFLAGS) $(DSUPERLULIB) \
+ 		$(ZSLUSRC) $(ZPLUSRC) $(ALLAUX) $(LAAUX)
+ 	$(RANLIB) $(DSUPERLULIB)

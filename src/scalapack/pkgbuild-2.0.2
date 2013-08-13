@@ -26,6 +26,7 @@ configure()
 
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
     -D LAPACK_LIBRARIES:STRING="$ATLAS_DIR/lib/liblapack.so.3" \
     -D BLAS_LIBRARIES:STRING="$ATLAS_DIR/lib/libblas.so.3" \
     ..
@@ -60,8 +61,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
+prepare
+configure
 build
 package
 clean

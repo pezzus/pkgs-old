@@ -58,8 +58,8 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-HYPRE_PATH=\$REPO/$reldir:\$PATH
-LD_LIBRARY_PATH=\$HYPRE_DIE/lib:\$LD_LIBRARY_PATH
+HYPRE_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$HYPRE_DIR/lib:\$LD_LIBRARY_PATH
 EOF
   popd
 }

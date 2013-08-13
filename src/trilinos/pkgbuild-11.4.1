@@ -29,11 +29,13 @@ configure()
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D CMAKE_PREFIX_PATH:STRING="$ZLIB_DIR" \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=ON \
+    -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
     -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
     -D BUILD_SHARED_LIBS:BOOL=ON \
     -D ML_ENABLE_MLapi:BOOL=ON \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D TPL_ENABLE_Zlib:BOOL=ON \
+    -D TPL_ENABLE_Pthread:BOOL=ON \
     -D Zlib_LIBRARY_DIRS:PATH=$ZLIB_DIR/lib \
     -D Zlib_INCLUDE_DIRS:PATH=$ZLIB_DIR/include \
     -D TPL_ENABLE_BLAS:BOOL=ON \
@@ -61,6 +63,26 @@ configure()
     -D TPL_ENABLE_AMD:BOOL=ON \
     -D AMD_LIBRARY_DIRS:PATH=$SUITESPARSE_DIR/lib \
     -D AMD_INCLUDE_DIRS:PATH=$SUITESPARSE_DIR/include \
+    -D TPL_ENABLE_Scotch:BOOL=ON \
+    -D Scotch_LIBRARY_DIRS:PATH=$SCOTCH_DIR/lib \
+    -D Scotch_INCLUDE_DIRS:PATH=$SCOTCH_DIR/include \
+    -D Scotch_LIBRARY_NAMES:STRING="ptesmumps;esmumps;ptscotch;scotch;ptscotcherr;scotcherr" \
+    -D TPL_ENABLE_SCALAPACK:BOOL=ON \
+    -D SCALAPACK_LIBRARY_DIRS:PATH=$SCALAPACK_DIR/lib \
+    -D SCALAPACK_INCLUDE_DIRS:PATH=$SCALAPACK_DIR/include \
+    -D TPL_ENABLE_MUMPS:BOOL=ON \
+    -D MUMPS_LIBRARY_DIRS:PATH=$MUMPS_DIR/lib \
+    -D MUMPS_INCLUDE_DIRS:PATH=$MUMPS_DIR/include \
+    -D MUMPS_LIBRARY_NAMES:STRING="dmumps;mumps_common;pord" \
+    -D TPL_ENABLE_HYPRE:BOOL=ON \
+    -D HYPRE_LIBRARY_DIRS:PATH=$HYPRE_DIR/lib \
+    -D HYPRE_INCLUDE_DIRS:PATH=$HYPRE_DIR/include \
+    -D TPL_ENABLE_SuperLU:BOOL=ON \
+    -D SuperLU_LIBRARY_DIRS:PATH=$SUPERLU_DIR/lib \
+    -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLU_DIR/include \
+    -D TPL_ENABLE_SuperLUDist:BOOL=ON \
+    -D SuperLUDist_LIBRARY_DIRS:PATH=$SUPERLUDIST_DIR/lib \
+    -D SuperLUDist_INCLUDE_DIRS:PATH=$SUPERLUDIST_DIR/include \
     -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
     -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
     -D PYTHON_INCLUDE:PATH=$PYTHON_DIR/include \
@@ -98,7 +120,7 @@ clean()
 }
 
 #prepare
-#configure
-#build
+configure
+build
 package
 #clean

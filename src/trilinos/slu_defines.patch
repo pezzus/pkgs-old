@@ -1,0 +1,13 @@
+--- packages/amesos/src/Amesos_Superludist.cpp.orig	2013-08-13 02:11:15.577755473 -0700
++++ packages/amesos/src/Amesos_Superludist.cpp	2013-08-13 02:11:48.743090017 -0700
+@@ -479,8 +479,8 @@
+     else                    PrivateSuperluData_->options_.ReplaceTinyPivot = (yes_no_t)NO;
+ 
+     if( IterRefine_ == "NO" ) PrivateSuperluData_->options_.IterRefine = (IterRefine_t)NO;
+-    else if( IterRefine_ == "DOUBLE" ) PrivateSuperluData_->options_.IterRefine = DOUBLE;
+-    else if( IterRefine_ == "EXTRA" ) PrivateSuperluData_->options_.IterRefine = EXTRA;
++    else if( IterRefine_ == "DOUBLE" ) PrivateSuperluData_->options_.IterRefine = SLU_DOUBLE;
++    else if( IterRefine_ == "EXTRA" ) PrivateSuperluData_->options_.IterRefine = SLU_EXTRA;
+ 
+     //  Without the following two lines, SuperLU_DIST cannot be made
+     //  quiet.

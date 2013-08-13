@@ -85,8 +85,11 @@ setpkg scalapack 2.0.2
 setpkg netcdf 4.3.0
 setpkg scotch 6.0.0
 setpkg hypre 2.9.1a
+setpkg mumps 4.10.0
 setpkg pcre 8.33
 setpkg swig 2.0.10
+setpkg superlu 4.3
+setpkg superlu_dist 3.3
 setpkg trilinos 11.4.1
 
 export PATH=${PATH%:}
