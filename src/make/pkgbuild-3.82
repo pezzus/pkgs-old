@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=make
 pkgver=3.82
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://ftp.gnu.org/gnu/make/$pkgname-$pkgver.tar.bz2
+  curl -O http://ftp.gnu.org/gnu/make/$pkgname-$pkgver.tar.bz2
   tar xvfj $pkgname-$pkgver.tar.bz2
   popd
 
@@ -60,11 +57,6 @@ PATH=\$REPO/$reldir/bin:\$PATH
 MANPATH=\$REPO/$reldir/share/man:\$MANPATH
 INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
 EOF
-  popd
-
-  # override system gmake
-  pushd $destdir/bin
-  #ln -svf make gmake
   popd
 }
 

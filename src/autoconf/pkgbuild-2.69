@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=autoconf
 pkgver=2.69
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://ftp.gnu.org/pub/gnu/autoconf/${pkgname}-${pkgver}.tar.gz
+  curl -O http://ftp.gnu.org/pub/gnu/autoconf/${pkgname}-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }

@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=pkg-config
 pkgver=0.28
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://pkgconfig.freedesktop.org/releases/${pkgname}-${pkgver}.tar.gz
+  curl -O http://pkgconfig.freedesktop.org/releases/${pkgname}-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }

@@ -3,12 +3,12 @@
 export REPO=$HOME/fenics/pkgs
 
 # default environment
-#PATH=/bin:/usr/bin
-#DYLD_LIBRARY_PATH=
-#INFOPATH=
-#MANPATH=
-#PKG_CONFIG_PATH=
-#PYTHONPATH=
+PATH=/bin:/usr/bin
+DYLD_LIBRARY_PATH=
+INFOPATH=
+MANPATH=
+PKG_CONFIG_PATH=
+PYTHONPATH=
 
 setpkg()
 {
@@ -21,23 +21,24 @@ setpkg()
   source $pkgdir/setenv
 }
 
+setpkg make 3.82
+setpkg automake 1.14
+setpkg autoconf 2.69
+setpkg pkg-config 0.28
+setpkg m4 1.4.16
+setpkg tar 1.26
 #setpkg diffutils 3.3
-#setpkg bc 1.06
+setpkg bc 1.06
+
 #setpkg gmp 5.1.2
 #setpkg mpfr 3.1.2
 #setpkg libmpc 1.0.1
 #setpkg isl 0.11.2
 #setpkg cloog 0.18.0
 #setpkg gcc 4.8.1
-#setpkg make 3.82
-#setpkg tar 1.26
-#setpkg m4 1.4.16
 #setpkg zlib 1.2.8
 #setpkg libffi 3.0.13
-#setpkg pkg-config 0.28
 #setpkg gawk 4.1.0
-#setpkg autoconf 2.69
-#setpkg automake 1.14
 #setpkg libtool 2.4.2
 #setpkg ncurses 5.9
 #setpkg readline 6.2
@@ -80,7 +81,7 @@ setpkg()
 #setpkg netcdf 4.3.0
 
 export PATH=${PATH%:}
-export DYLD_LIBRARY_PATH=${LD_LIBRARY_PATH%:}
+export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH%:}
 export INFOPATH=${INFOPATH%:}
 export MANPATH=${MANPATH%:}
 export PKG_CONFIG_PATH=${PKG_CONFIG_PATH%:}

@@ -1,7 +1,4 @@
-#!/bin/bash
-
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+#!/bin/bash -e
 
 pkgname=bc
 pkgver=1.06
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://ftp.gnu.org/gnu/${pkgname}/${pkgname}-${pkgver}.tar.gz
+  curl -O http://ftp.gnu.org/gnu/${pkgname}/${pkgname}-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 

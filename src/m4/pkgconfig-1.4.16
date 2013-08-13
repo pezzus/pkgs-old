@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=m4
 pkgver=1.4.16
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://ftp.gnu.org/gnu/m4/$pkgname-$pkgver.tar.gz
+  curl -O http://ftp.gnu.org/gnu/m4/$pkgname-$pkgver.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
