@@ -1,0 +1,14 @@
+--- cmake/modules/FindCGAL.cmake.orig	2013-08-14 02:27:29.028042177 -0700
++++ cmake/modules/FindCGAL.cmake	2013-08-14 02:27:34.703091687 -0700
+@@ -76,9 +76,11 @@
+ 
+ # Add GMP and MPFR libraries if defined by CGAL
+ if (GMP_LIBRARIES)
++  set(CGAL_INCLUDE_DIRS ${CGAL_INCLUDE_DIRS} ${GMP_INCLUDE_DIR})
+   set(CGAL_LIBRARIES ${CGAL_LIBRARIES} ${GMP_LIBRARIES})
+ endif()
+ if (MPFR_LIBRARIES)
++  set(CGAL_INCLUDE_DIRS ${CGAL_INCLUDE_DIRS} ${MPFR_INCLUDE_DIR})
+   set(CGAL_LIBRARIES ${CGAL_LIBRARIES} ${MPFR_LIBRARIES})
+ endif()
+ 

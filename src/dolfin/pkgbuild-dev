@@ -20,20 +20,26 @@ prepare()
 
 configure()
 {
-  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  #[[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
   export BOOST_ROOT=$BOOST_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D CMAKE_PREFIX_PATH:PATH="$ZLIB_DIR:$MPFR_DIR:$GMP_DIR" \
     -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
+    -D PYTHON_INCLUDE_DIR:PATH=$PYTHON_DIR/include/python2.7 \
     -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
+    -D LAPACK_DIR:PATH=$ATLAS_DIR \
+    -D CGAL_DIR:PATH=$CGAL_DIR \
     -D ARMADILLO_DIR:PATH=$ARMADILLO_DIR \
     -D SCOTCH_DIR:PATH=$SCOTCH_DIR \
     -D AMD_DIR:PATH=$SUITESPARSE_DIR \
+    -D PETSC_DIR:PATH=$PETSC_DIR \
     -D UMFPACK_DIR:PATH=$SUITESPARSE_DIR \
     -D CHOLMOD_DIR:PATH=$SUITESPARSE_DIR \
-    -D TRILINOS_DIR:PATH=$TRILINOS_DOR \
+    -D TRILINOS_DIR:PATH=$TRILINOS_DIR \
+    -D METIS_DIR:PATH=$METIS_DIR \
     -D PARMETIS_DIR:PATH=$PARMETIS_DIR \
     -D HDF5_DIR:PATH=$HDF5_DIR \
     ../
@@ -61,10 +67,10 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-UFC_DIR=\$REPO/$reldir
-PATH=\$UFC_DIR/bin:\$PATH
-PYTHONPATH=\$UFC_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
-PKG_CONFIG_PATH=\$UFC_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+DOLFIN_DIR=\$REPO/$reldir
+PATH=\$DOLFIN_DIR/bin:\$PATH
+PYTHONPATH=\$DOLFIN_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+PKG_CONFIG_PATH=\$DOLFIN_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
 }
@@ -75,7 +81,7 @@ clean()
 }
 
 #prepare
-configure
+#configure
 #build
-#package
+package
 #clean

@@ -1,0 +1,66 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=python-scientificpython
+pkgver=2.9.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/ScientificPython-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N https://bitbucket.org/khinsen/scientificpython/downloads/ScientificPython-$pkgver.tar.gz \
+    --no-check-certificate
+  tar xvfz ScientificPython-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  export NETCDF_PREFIX=$NETCDF_DIR
+  python setup.py config
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  python setup.py build --numpy
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  mkdir -pv $destdir/lib/python$_pythonver/site-packages
+  export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
+  python setup.py install --prefix=$destdir --optimize=1
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

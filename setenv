@@ -8,11 +8,11 @@ alias grep='grep --colour=auto'
 REPO=/data/scratch/simone/repo
 
 # default environment
-#PATH=/bin:/usr/bin
-#LD_LIBRARY_PATH=
-#INFOPATH=
-#MANPATH=
-#PKG_CONFIG_PATH=
+PATH=/bin:/usr/bin
+LD_LIBRARY_PATH=
+INFOPATH=
+MANPATH=
+PKG_CONFIG_PATH=
 PYTHONPATH=
 
 setpkg()
@@ -92,15 +92,21 @@ setpkg superlu 4.3
 setpkg superlu_dist 3.3
 setpkg trilinos 11.4.1
 setpkg petsc 3.4.2
+setpkg python-ply 3.4
+setpkg python-scientificpython 2.9.2
 setpkg python-ufl dev
 setpkg python-uflacs dev
 setpkg python-ffc dev
 setpkg python-fiat dev
 setpkg python-instant dev
 setpkg python-ufc dev
+setpkg dolfin dev
 
 export PATH=${PATH%:}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH%:}
+export LIBRARY_PATH=${LD_LIBRARY_PATH}
+export CPATH=
+export INCLUDE=
 export INFOPATH=${INFOPATH%:}
 export MANPATH=${MANPATH%:}
 export PKG_CONFIG_PATH=${PKG_CONFIG_PATH%:}
