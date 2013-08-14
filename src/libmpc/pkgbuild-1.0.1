@@ -1,26 +1,30 @@
 #!/bin/bash -e
 
-pkgname=texinfo
-pkgver=5.1
+pkgname=libmpc
+pkgver=1.0.1
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/$pkgname-$pkgver
+srcdir=$tmpdir/mpc-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  curl -O http://ftp.gnu.org/gnu/texinfo/$pkgname-$pkgver.tar.gz
-  tar xvfz $pkgname-$pkgver.tar.gz
+  curl -O http://www.multiprecision.org/mpc/download/mpc-${pkgver/_/-}.tar.gz
+  tar xvfz mpc-$pkgver.tar.gz
   popd
 }
 
 configure()
 {
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
+
   ../configure \
-    --prefix=$destdir
+    --prefix=$destdir \
+    --with-gmp=$GMP_DIR \
+    --with-mpfr=$MPFR_DIR
   popd
 }
 
@@ -28,6 +32,7 @@ build()
 {
   pushd $srcdir/build
   make
+  make check
   popd
 }
 
@@ -41,9 +46,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-PATH=\$REPO/$reldir/bin:\$PATH
-MANPATH=\$REPO/$reldir/share/man:\$MANPATH
-INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
+export LIBMPC_DIR=\$REPO/$reldir
+INFOPATH=\$LIBMPC_DIR/share/info:\$INFOPATH
+DYLD_LIBRARY_PATH=\$LIBMPC_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }

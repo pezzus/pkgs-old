@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=gcc
 pkgver=4.8.1
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://gcc.gnu.org/pub/gcc/releases/gcc-4.8.1/gcc-${pkgver}.tar.bz2
+  curl -O http://ftp.gnu.org/gnu/gcc/gcc-${pkgver}/gcc-${pkgver}.tar.bz2
   tar xvfj $pkgname-$pkgver.tar.bz2
 
   pushd $srcdir
@@ -48,7 +45,6 @@ configure()
     --enable-threads=posix \
     --enable-__cxa_atexit \
     --disable-libunwind-exceptions \
-    --enable-clocale=gnu \
     --disable-libstdcxx-pch \
     --enable-libstdcxx-time \
     --enable-linker-build-id \
@@ -128,9 +124,9 @@ EOF
   # source script
   pushd $destdir
   cat << EOF > setenv
-GCC_DIR=\$REPO/$reldir
+export GCC_DIR=\$REPO/$reldir
 PATH=\$GCC_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$GCC_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$GCC_DIR/lib:\$DYLD_LIBRARY_PATH
 MANPATH=\$GCC_DIR/share/man:\$MANPATH
 INFOPATH=\$GCC_DIR/share/info:\$INFOPATH
 EOF

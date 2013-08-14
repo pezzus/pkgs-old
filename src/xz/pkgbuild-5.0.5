@@ -1,10 +1,7 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
-pkgname=gmp
-pkgver=5.1.2
+pkgname=xz
+pkgver=5.0.5
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
@@ -14,25 +11,25 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://ftp.gmplib.org/pub/gmp-${pkgver}/gmp-${pkgver}.tar.bz2
-  tar xvfj $pkgname-$pkgver.tar.bz2
+  curl -O http://tukaani.org/${pkgname}/${pkgname}-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
 
 configure()
 {
-  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
-  mkdir -pv $srcdir/build && pushd $srcdir/build
-  
-  ../configure \
+  # out of source doesn't work
+  pushd $srcdir
+  ./configure \
     --prefix=$destdir \
-    --enable-cxx
+    --disable-rpath \
+    --enable-werror
   popd
 }
 
 build()
 {
-  pushd $srcdir/build
+  pushd $srcdir
   make
   popd
 }
@@ -42,14 +39,16 @@ package()
   # remove old installation
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
-  pushd $srcdir/build
+  pushd $srcdir
   make install
   popd
   pushd $destdir
   cat << EOF > setenv
-GMP_DIR=\$REPO/$reldir
-INFOPATH=\$GMP_DIR/share/info:\$INFOPATH
-LD_LIBRARY_PATH=\$GMP_DIR/lib:\$LD_LIBRARY_PATH
+XZ_DIR=\$REPO/$reldir
+PATH=\$XZ_DIR/bin:\$PATH
+MANPATH=\$XZ_DIR/share/man:\$MANPATH
+DYLD_LIBRARY_PATH=\$XZ_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$XZ_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
 }

@@ -1,21 +1,21 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
-pkgname=libmpc
-pkgver=1.0.1
+pkgname=cloog
+pkgver=0.18.0
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/mpc-$pkgver
+srcdir=$tmpdir/$pkgname-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.multiprecision.org/mpc/download/mpc-${pkgver/_/-}.tar.gz
-  tar xvfz mpc-$pkgver.tar.gz
+  curl -O http://www.bastoul.net/cloog/pages/download/$pkgname-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  pushd $srcdir
+  patch -Np1 -i $REPO/src/cloog/cloog-0.18.0-isl-0.11.2.patch
+  popd
   popd
 }
 
@@ -26,8 +26,12 @@ configure()
 
   ../configure \
     --prefix=$destdir \
-	--with-gmp=$GMP_DIR \
-	--with-mpfr=$MPFR_DIR
+    --enable-shared \
+    --with-gmp=system \
+    --with-gmp-prefix=$GMP_DIR \
+    --with-isl=system \
+    --with-isl-prefix=$ISL_DIR
+  
   popd
 }
 
@@ -49,9 +53,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-LIBMPC_DIR=\$REPO/$reldir
-INFOPATH=\$LIBMPC_DIR/share/info:\$INFOPATH
-LD_LIBRARY_PATH=\$LIBMPC_DIR/lib:\$LD_LIBRARY_PATH
+export CLOOG_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$CLOOG_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$CLOOG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
 }

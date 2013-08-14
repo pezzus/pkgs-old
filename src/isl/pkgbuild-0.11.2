@@ -1,10 +1,7 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
-pkgname=gawk
-pkgver=4.1.0
+pkgname=isl
+pkgver=0.11.2
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
@@ -14,21 +11,20 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://ftp.gnu.org/pub/gnu/gawk/${pkgname}-${pkgver}.tar.gz
-  tar xvfz $pkgname-$pkgver.tar.gz
+  curl -O http://ftp.cruxppc.org/cruxppc/distfiles/3.0/$pkgname-$pkgver.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
   popd
 }
 
 configure()
 {
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
   ../configure \
     --prefix=$destdir \
-    --libexecdir=$destdir/lib \
-    --without-libsigsegv \
-    --with-readline=$READLINE_DIR \
-    --with-mpfr=$MPFR_DIR
+    --with-gmp-prefix=$GMP_DIR
+
   popd
 }
 
@@ -36,6 +32,7 @@ build()
 {
   pushd $srcdir/build
   make
+  make check
   popd
 }
 
@@ -49,11 +46,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-GAWK_DIR=\$REPO/$reldir
-PATH=\$GAWK_DIR/bin:\$PATH
-MANPATH=\$GAWK_DIR/share/man:\$MANPATH
-INFOPATH=\$GAWK_DIR/share/info:\$INFOPATH
-LD_LIBRARY_PATH=\$GAWK_DIR/lib:\$LD_LIBRARY_PATH
+export ISL_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$ISL_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$ISL_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
 }

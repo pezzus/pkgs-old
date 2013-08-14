@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=zlib
 pkgver=1.2.8
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://zlib.net/current/zlib-${pkgver}.tar.gz
+  curl -O http://zlib.net/current/zlib-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -45,9 +42,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-ZLIB_DIR=\$REPO/$reldir
+export ZLIB_DIR=\$REPO/$reldir
 MANPATH=\$ZLIB_DIR/share/man:\$MANPATH
-LD_LIBRARY_PATH=\$ZLIB_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$ZLIB_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$ZLIB_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd

@@ -25,24 +25,27 @@ setpkg make 3.82
 setpkg automake 1.14
 setpkg autoconf 2.69
 setpkg pkg-config 0.28
+setpkg libtool 2.4.2
 setpkg m4 1.4.16
+setpkg xz 5.0.5
 setpkg tar 1.26
-#setpkg diffutils 3.3
+setpkg diffutils 3.3
 setpkg bc 1.06
+setpkg texinfo 5.1
 
-#setpkg gmp 5.1.2
-#setpkg mpfr 3.1.2
-#setpkg libmpc 1.0.1
-#setpkg isl 0.11.2
-#setpkg cloog 0.18.0
-#setpkg gcc 4.8.1
-#setpkg zlib 1.2.8
+setpkg gmp 5.1.2
+setpkg mpfr 3.1.2
+setpkg libmpc 1.0.1
+setpkg isl 0.11.2
+setpkg cloog 0.18.0
+setpkg gcc 4.8.1
+
+setpkg zlib 1.2.8
+setpkg ncurses 5.9
+setpkg readline 6.2
+setpkg gawk 4.1.0
+
 #setpkg libffi 3.0.13
-#setpkg gawk 4.1.0
-#setpkg libtool 2.4.2
-#setpkg ncurses 5.9
-#setpkg readline 6.2
-#setpkg texinfo 5.1
 #setpkg binutils 2.23.2
 #setpkg bzip2 1.0.6
 #setpkg expat 2.1.0
@@ -56,7 +59,6 @@ setpkg bc 1.06
 #setpkg icu 51.2
 #setpkg boost 1.54.0
 #setpkg atlas 3.10.1
-#setpkg xz 5.0.5
 #setpkg lzo2 2.06
 #setpkg libarchive 3.1.2
 #setpkg cmake 2.8.11.2
