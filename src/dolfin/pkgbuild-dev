@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=dolfin
 pkgver=dev
 
@@ -23,19 +20,14 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  export BOOST_ROOT=$BOOST_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
-    -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
-    -D ARMADILLO_DIR:PATH=$ARMADILLO_DIR \
     -D SCOTCH_DIR:PATH=$SCOTCH_DIR \
     -D AMD_DIR:PATH=$SUITESPARSE_DIR \
     -D UMFPACK_DIR:PATH=$SUITESPARSE_DIR \
     -D CHOLMOD_DIR:PATH=$SUITESPARSE_DIR \
     -D TRILINOS_DIR:PATH=$TRILINOS_DOR \
     -D PARMETIS_DIR:PATH=$PARMETIS_DIR \
-    -D HDF5_DIR:PATH=$HDF5_DIR \
     ../
   
   popd
@@ -74,7 +66,7 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
+prepare
 configure
 #build
 #package

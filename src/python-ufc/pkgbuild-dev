@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=python-ufc
 pkgver=dev
 
@@ -26,8 +23,6 @@ configure()
   export BOOST_ROOT=$BOOST_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
-    -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
      ../
   
   popd
@@ -53,7 +48,7 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-UFC_DIR=\$REPO/$reldir
+export UFC_DIR=\$REPO/$reldir
 PATH=\$UFC_DIR/bin:\$PATH
 PYTHONPATH=\$UFC_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
 PKG_CONFIG_PATH=\$UFC_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
@@ -66,7 +61,7 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
+prepare
 configure
 build
 package

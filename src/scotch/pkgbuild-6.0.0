@@ -69,7 +69,7 @@ package()
 
   pushd $destdir/lib
   for lib in libscotcherr{,exit}; do
-    cc -dynamiclib -install_name $lib.6.0 \
+    cc -dynamiclib -install_name $lib.dylib.6 \
        -compatibility_version 6.0 \
        -current_version $pkgver \
        -Wl,-all_load $lib.a \
@@ -80,7 +80,7 @@ package()
     rm $lib.a
   done
 
-  cc -dynamiclib -install_name libscotch.6.0 \
+  cc -dynamiclib -install_name libscotch.dylib.6 \
      -compatibility_version 6.0 \
      -current_version $pkgver \
      -Wl,-all_load libscotch.a \
@@ -91,7 +91,7 @@ package()
   ln -svf libscotch.dylib.$pkgver libscotch.dylib.6.0
   rm libscotch.a
 
-  cc -dynamiclib -install_name libesmumps.6.0 \
+  cc -dynamiclib -install_name libesmumps.dylib.6 \
      -compatibility_version 6.0 \
      -current_version $pkgver \
      -Wl,-all_load libesmumps.a \
@@ -103,7 +103,7 @@ package()
   rm libesmumps.a
 
   for lib in libptscotcherr{,exit}; do
-    mpicc -dynamiclib -install_name $lib.6.0 \
+    mpicc -dynamiclib -install_name $lib.dylib.6 \
        -compatibility_version 6.0 \
        -current_version $pkgver \
        -Wl,-all_load $lib.a \
@@ -114,7 +114,7 @@ package()
     rm $lib.a
   done
 
-  mpicc -dynamiclib -install_name libptscotch.6.0 \
+  mpicc -dynamiclib -install_name libptscotch.dylib.6 \
      -compatibility_version 6.0 \
      -current_version $pkgver \
      -Wl,-all_load libptscotch.a \
@@ -125,7 +125,7 @@ package()
   ln -svf libptscotch.dylib.$pkgver libptscotch.dylib.6.0
   rm libptscotch.a
 
-  cc -dynamiclib -install_name libptesmumps.6.0 \
+  cc -dynamiclib -install_name libptesmumps.dylib.6 \
      -compatibility_version 6.0 \
      -current_version $pkgver \
      -Wl,-all_load libptesmumps.a \

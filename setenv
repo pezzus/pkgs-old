@@ -24,6 +24,13 @@ setpkg mumps 4.10.0
 setpkg hypre 2.9.1a
 setpkg trilinos 11.4.1
 
+setpkg python-ufl dev
+setpkg python-uflacs dev
+setpkg python-ffc dev
+setpkg python-fiat dev
+setpkg python-instant dev
+setpkg python-ufc dev
+
 export PATH=${PATH%:}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH%:}
 export DYLD_FRAMEWORK_PATH=${DYLD_FRAMEWORK_PATH%:}

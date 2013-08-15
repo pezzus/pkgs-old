@@ -60,9 +60,9 @@ LIBOTHERS = -lm
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = -fPIC -O3 -m64 -DALLOW_NON_INIT
-OPTL    = -fPIC -O3 -m64
-OPTC    = -fPIC -O3 -m64
+OPTF    = -fPIC -O3 -DALLOW_NON_INIT
+OPTL    = -fPIC -O3
+OPTC    = -fPIC -O3
 #End Optimized options
 INCS = \$(INCPAR)
 LIBS = \$(LIBPAR)
@@ -91,7 +91,7 @@ package()
   rm $destdir/lib/dummy
 
   pushd $destdir/lib
-  cc -dynamiclib -install_name libpord.4.10 \
+  mpif90 -dynamiclib -install_name libpord.dylib.4 \
      -compatibility_version 4.10 \
      -current_version $pkgver \
      -Wl,-all_load libpord.a \
@@ -101,7 +101,7 @@ package()
   ln -svf libpord.dylib.$pkgver libpord.dylib.4.10
   rm libpord.a
 
-  mpif90 -dynamiclib -install_name libmumps_common.4.10 \
+  mpif90 -dynamiclib -install_name libmumps_common.dylib.4 \
      -compatibility_version 4.10 \
      -current_version $pkgver \
      -Wl,-all_load libmumps_common.a \
@@ -113,12 +113,12 @@ package()
   rm libmumps_common.a
 
   for tt in {c,d,z,s}; do
-    mpif90 -dynamiclib -install_name lib${tt}mumps.4.10 \
+    mpif90 -dynamiclib -install_name lib${tt}mumps.dylib.4 \
        -compatibility_version 4.10 \
        -current_version $pkgver \
        -Wl,-all_load lib${tt}mumps.a \
        -L. -lmumps_common -L$SCALAPACK_DIR/lib -lscalapack \
-       -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch -lesmumps -lptscotcherr -lptscotcherrexit -lscotcherrexit -lscotcherr \
+       -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch \
        -L$METIS_DIR/lib -lmetis \
        -framework Accelerate \
        -o lib${tt}mumps.dylib.$pkgver
@@ -144,7 +144,7 @@ clean()
 }
 
 #prepare
-#configure
-#build
+configure
+build
 package
 #clean
