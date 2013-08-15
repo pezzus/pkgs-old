@@ -29,7 +29,7 @@ OBJ = .o
 
 MAKE = make
 AR = gcc
-ARFLAGS = -shared -o
+ARFLAGS = -shared -Wl,--no-whole-archive \$(LDFLAGS) -o
 CAT = cat
 CCS = gcc
 CCP = mpicc
@@ -86,6 +86,6 @@ clean()
 
 #prepare
 #configure
-#build
+build
 package
 #clean

@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=python
 pkgver=2.7.5
 
@@ -14,14 +11,14 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.python.org/ftp/python/${pkgver%rc?}/Python-${pkgver}.tar.xz
+  curl -O -L http://www.python.org/ftp/python/${pkgver%rc?}/Python-${pkgver}.tar.xz
   tar xvfJ Python-$pkgver.tar.xz
   popd
 
   pushd $srcdir
 
   # Enable built-in SQLite module to load extensions (fix FS#22122)
-  sed -i "/SQLITE_OMIT_LOAD_EXTENSION/d" setup.py
+  #sed "/SQLITE_OMIT_LOAD_EXTENSION/d" > setup.py
 
   rm -r Modules/expat
   rm -r Modules/zlib
@@ -34,10 +31,12 @@ configure()
 {
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  CFLAGS="${CFLAGS} -I$LIBFFI_DIR/include -I$LIBEXPAT_DIR/include" \
-  LDFLAGS="${LDFLAGS} -L$LIBFFI_DIR/lib -L$LIBEXPAT_DIR/lib" \
+  CPPFLAGS="-I$TCL_DIR/include -I/opt/X11/include -I$TK_DIR/include -I$LIBFFI_DIR/include -I$LIBEXPAT_DIR/include" \
+  LDFLAGS="-L$TCL_DIR/lib -L/opt/X11/lib -L$TK_DIR/lib -L$LIBFFI_DIR/lib -L$LIBEXPAT_DIR/lib" \
   ../configure \
     --prefix=$destdir \
+    --datarootdir=$destdir/share \
+    --datadir=$destdir/share \
     --enable-shared \
     --with-threads \
     --enable-unicode=ucs4 \
@@ -66,9 +65,9 @@ package()
 
   pushd $destdir
   cat << EOF > setenv
-PYTHON_DIR=\$REPO/$reldir
+export PYTHON_DIR=\$REPO/$reldir
 PATH=\$PYTHON_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$PYTHON_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$PYTHON_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$PYTHON_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 MANPATH=\$PYTHON_DIR/share/man:\$MANPATH
 INFOPATH=\$PYTHON_DIR/share/info:\$INFOPATH
@@ -81,8 +80,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
+#prepare
 configure
-build
-package
-clean
+#build
+#package
+#clean

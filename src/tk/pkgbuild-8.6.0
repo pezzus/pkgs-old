@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=tk
 pkgver=8.6.0
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/sourceforge/tcl/tk${pkgver}-src.tar.gz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/tcl/tk${pkgver}-src.tar.gz
   tar xvfz $pkgname$pkgver-src.tar.gz
   popd
 }
@@ -26,11 +23,15 @@ configure()
   CXXFLAGS="${CXXFLAGS} -I$TCL_DIR/include" \
   LDFLAGS="${LDFLAGS} -L$TCL_DIR/lib" \
   ./configure \
+    CPPFLAGS="-I/opt/X11/include" \
+    LDFLAGS="-L/opt/X11/lib" \
     --prefix=$destdir \
     --mandir=$destdir/share/man \
     --enable-threads \
     --enable-64bit \
-    --with-tcl=$TCL_DIR/lib
+    --with-tcl=$TCL_DIR/lib \
+    --with-x
+
   popd
 }
 
@@ -56,9 +57,9 @@ package()
   ln -sf wish8.6 "${destdir}/bin/wish"
 
   cat << EOF > setenv
-TK_DIR=\$REPO/$reldir
+export TK_DIR=\$REPO/$reldir
 PATH=\$TCL_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$TCL_DIR/bin:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$TCL_DIR/bin:\$DYLD_LIBRARY_PATH
 MANPATH=\$TCL_DIR/share/man:\$MANPATH
 PKG_CONFIG_PATH=\$TCL_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
@@ -70,8 +71,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
+prepare
+configure
 build
 package
 clean

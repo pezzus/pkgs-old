@@ -1,0 +1,68 @@
+#!/bin/bash -e
+
+pkgname=slang
+pkgver=2.2.4
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O ftp://ftp.fu-berlin.de/pub/unix/misc/slang/v${pkgver%.*}/${pkgname}-${pkgver}.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+  popd
+}
+
+configure()
+{
+  # out of source doesn't work
+  pushd $srcdir
+  ./configure \
+    --prefix=$destdir \
+    --with-readline=$READLINE_DIR \
+    --with-pcre=$PCRE_DIR \
+    --with-png=$LIBPNG_DIR \
+    --with-z=$ZLIB_DIR
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export SLANG_DIR=\$REPO/$reldir
+PATH=\$SLANG_DIR/bin:\$PATH
+MANPATH=\$SLANG_DIR/share/man:\$MANPATH
+DYLD_LIBRARY_PATH=\$SLANG_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$SLANG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+build
+package
+#clean

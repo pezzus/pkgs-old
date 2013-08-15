@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=libpng
 pkgver=1.6.3
 
@@ -14,8 +11,8 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.xz
-  wget -N http://downloads.sourceforge.net/sourceforge/$pkgname-apng/$pkgname-$pkgver-apng.patch.gz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.xz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/$pkgname-apng/$pkgname-$pkgver-apng.patch.gz
   tar xvfJ $pkgname-$pkgver.tar.xz
   gzip --decompress $pkgname-$pkgver-apng.patch.gz
   popd
@@ -30,9 +27,8 @@ configure()
   pushd $srcdir
   ./configure \
     --prefix=$destdir \
-    CFLAGS="$CFLAGS -I$ZLIB_DIR/include" \
-    CPPFLAGS="$CPPFLAGS -I$ZLIB_DIR/include" \
-    LDFLAGS="$LDFLAGS -L$ZLIB_DIR/lib"
+    CPPFLAGS="-I$ZLIB_DIR/include" \
+    LDFLAGS="-L$ZLIB_DIR/lib"
   popd
 }
 
@@ -63,10 +59,10 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-LIBPNG_DIR=\$REPO/$reldir
+export LIBPNG_DIR=\$REPO/$reldir
 PATH=\$LIBPNG_DIR/bin:\$PATH
 MANPATH=\$LIBPNG_DIR/share/info:\$MANPATH
-LD_LIBRARY_PATH=\$LIBPNG_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$LIBPNG_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$LIBPNG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd

@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=expat
 pkgver=2.1.0
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/sourceforge/expat/${pkgname}-${pkgver}.tar.gz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/expat/${pkgname}-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -45,9 +42,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-LIBEXPAT_DIR=\$REPO/$reldir
+export LIBEXPAT_DIR=\$REPO/$reldir
 PATH=\$LIBEXPAT_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$LIBEXPAT_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$LIBEXPAT_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$LIBEXPAT_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 MANPATH=\$LIBEXPAT_DIR/share/man:\$MANPATH
 EOF

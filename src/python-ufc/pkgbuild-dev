@@ -3,19 +3,18 @@
 REPO=/data/scratch/simone/repo
 source $REPO/setenv > /dev/null
 
-pkgname=scalapack
-pkgver=2.0.2
+pkgname=python-ufc
+pkgver=dev
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/$pkgname-$pkgver
+srcdir=$tmpdir/ufc
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
-  tar xvfz $pkgname-$pkgver.tgz
+  git clone git@bitbucket.org:fenics-project/ufc.git
   popd
 }
 
@@ -24,12 +23,13 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
+  export BOOST_ROOT=$BOOST_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D BUILD_SHARED_LIBS:BOOL=ON \
-    -D LAPACK_LIBRARIES:STRING="$ATLAS_DIR/lib/liblapack.so.3" \
-    -D BLAS_LIBRARIES:STRING="$ATLAS_DIR/lib/libblas.so.3" \
-    ..
+    -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
+    -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
+     ../
+  
   popd
 }
 
@@ -46,12 +46,17 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir/build
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  mkdir -pv $destdir/lib/python$_pythonver/site-packages
+  export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
   make install
   popd
   pushd $destdir
   cat << EOF > setenv
-SCALAPACK_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$SCALAPACK_DIR/lib:\$LD_LIBRARY_PATH
+UFC_DIR=\$REPO/$reldir
+PATH=\$UFC_DIR/bin:\$PATH
+PYTHONPATH=\$UFC_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+PKG_CONFIG_PATH=\$UFC_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
 }
@@ -61,9 +66,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
+#prepare
 configure
 build
 package
 clean
-

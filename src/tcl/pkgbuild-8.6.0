@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=tcl
 pkgver=8.6.0
 
@@ -14,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/sourceforge/tcl/tcl${pkgver}-src.tar.gz
+  curl -O -L http://downloads.sourceforge.net/sourceforge/tcl/tcl${pkgver}-src.tar.gz
   tar xvfz $pkgname$pkgver-src.tar.gz
   popd
 }
@@ -52,9 +49,9 @@ package()
   ln -sf tclsh8.6 "${destdir}/bin/tclsh"
 
   cat << EOF > setenv
-TCL_DIR=\$REPO/$reldir
+export TCL_DIR=\$REPO/$reldir
 PATH=\$TCL_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$TCL_DIR/bin:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$TCL_DIR/bin:\$DYLD_LIBRARY_PATH
 MANPATH=\$TCL_DIR/share/man:\$MANPATH
 PKG_CONFIG_PATH=\$TCL_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF

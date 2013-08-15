@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=libffi
 pkgver=3.0.13
 
@@ -14,18 +11,27 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N ftp://sourceware.org/pub/libffi/libffi-${pkgver}.tar.gz
+  curl -O http://mirrors.kernel.org/sources.redhat.com/libffi/libffi-$pkgver.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
+  pushd $srcdir
+  patch -Np1 -i $REPO/src/libffi/libffi-3.0.13-includedir-1.patch
+  popd
   popd
 }
 
 configure()
 {
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
   ../configure \
+    --build="x86_64-apple-darwin12.4.0" \
     --prefix=$destdir \
-    --disable-static
+    --libdir=$destdir/lib \
+    --includedir=$destdir/include \
+    --oldincludedir=$destdir/include \
+    --disable-dependency-tracking
+
   popd
 }
 
@@ -52,8 +58,8 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-LIBFFI_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$LIBFFI_DIR/lib:\$LD_LIBRARY_PATH
+export LIBFFI_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$LIBFFI_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$LIBFFI_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 MANPATH=\$LIBFFI_DIR/share/man:\$MANPATH
 INFOPATH=\$LIBFFI_DIR/share/info:\$INFOPATH

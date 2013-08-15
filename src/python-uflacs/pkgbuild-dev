@@ -1,0 +1,63 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=python-uflacs
+pkgver=dev
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/uflacs
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  git clone git@bitbucket.org:fenics-project/uflacs.git
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  python setup.py config
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  python setup.py build
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  mkdir -pv $destdir/lib/python$_pythonver/site-packages
+  export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
+  python setup.py install --prefix=$destdir --optimize=1
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean

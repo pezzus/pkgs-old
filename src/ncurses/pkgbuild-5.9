@@ -25,7 +25,7 @@ configure()
   export PKG_CONFIG_LIBDIR="$destdir/lib/pkgconfig"
   mkdir -pv $destdir/lib/pkgconfig
   
-  mkdir -pv $srcdir/wbuild && pushd $srcdir/wbuild
+  mkdir -pv $srcdir/build && pushd $srcdir/build
   ../configure \
     --prefix=$destdir \
     --mandir=$destdir/share/man \
@@ -43,7 +43,7 @@ configure()
 
 build()
 {
-  pushd $srcdir/wbuild
+  pushd $srcdir/build
   make  
   rm -f misc/pc-files
   make
@@ -58,7 +58,7 @@ package()
   export PKG_CONFIG_LIBDIR="$destdir/lib/pkgconfig"
   mkdir -pv $destdir/lib/pkgconfig
   
-  pushd $srcdir/wbuild
+  pushd $srcdir/build
   make install
   popd
 
@@ -68,7 +68,7 @@ export NCURSES_DIR=\$REPO/$reldir
 PATH=\$NCURSES_DIR/bin:\$PATH
 MANPATH=\NCURSES_DIR/share/man:\$MANPATH
 PKG_CONFIG_PATH=\$NCURSES_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
-LD_LIBRARY_PATH=\$NCURSES_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$NCURSES_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -78,8 +78,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
 clean

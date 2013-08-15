@@ -1,0 +1,76 @@
+#!/bin/bash -e
+
+REPO=/data/scratch/simone/repo
+source $REPO/setenv > /dev/null
+
+pkgname=hypre
+pkgver=2.9.1a
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver/src
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  [[ -d $tmpdir ]] && rm -rf $tmpdir
+  mkdir -pv $tmpdir && pushd $tmpdir
+  wget -N http://ftp.mcs.anl.gov/pub/petsc/externalpackages/hypre-${pkgver}.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+
+  ./configure \
+    --prefix=$destdir \
+    --libdir=$destdir/lib \
+    --enable-shared \
+    --with-blas=yes \
+    --with-lapack=yes \
+    --with-blas-lib-dir=$ATLAS_DIR/lib \
+    --with-blas-libs="blas" \
+    --with-lapack-lib-dir=$ATLAS_DIR/lib \
+    --with-lapack-libs="lapack" \
+    --without-babel \
+    --without-mli \
+    --without-fei \
+    --without-superlu
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+HYPRE_DIR=\$REPO/$reldir
+LD_LIBRARY_PATH=\$HYPRE_DIR/lib:\$LD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+clean

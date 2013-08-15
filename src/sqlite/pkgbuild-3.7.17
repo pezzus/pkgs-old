@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=sqlite
 pkgver=3.7.17
 _pkgver=3071700
@@ -15,7 +12,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.sqlite.org/2013/sqlite-autoconf-$_pkgver.tar.gz
+  curl -O -L http://www.sqlite.org/2013/sqlite-autoconf-$_pkgver.tar.gz
   tar xvfz $pkgname-autoconf-$_pkgver.tar.gz
   popd
 }
@@ -23,26 +20,20 @@ prepare()
 configure()
 {
   pushd $srcdir
+  CPPFLAGS="-DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS -DSQLITE_ENABLE_COLUMN_METADATA -DSQLITE_ENABLE_STAT3 -I$READLINE_DIR/include" \
+  LDFLAGS="-L$READLINE_DIR/lib" \
   ./configure \
+    --build="x86_64-apple-darwin12.4.0" \
     --prefix=$destdir \
-    --disable-static
-  popd
-
-  pushd $srcdir/tea
-  ./configure \
-    --prefix=$destdir \
-    --with-system-sqlite \
-    --with-tcl=$TCL_DIR/lib \
-    --with-tclinclude=$TCL_DIR/include
+    --disable-static \
+    --disable-dependency-tracking \
+    --enable-dynamic-extensions
   popd
 }
 
 build()
 {
   pushd $srcdir
-  make
-  popd
-  pushd $srcdir/tea
   make
   popd
 }
@@ -54,13 +45,11 @@ package()
   # install new one
   pushd $srcdir
   make install
-  cd tea
-  make install
   popd
   pushd $destdir
   cat << EOF > setenv
 PATH=\$REPO/$reldir/bin:\$PATH
-LD_LIBRARY_PATH=\$REPO/$reldir/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$REPO/$reldir/lib:\$DYLD_LIBRARY_PATH
 MANPATH=\$REPO/$reldir/share/man:\$MANPATH
 PKG_CONFIG_PATH=\$REPO/$reldir/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
