@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=trilinos
 pkgver=11.4.1
 
@@ -24,10 +21,8 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  export BOOST_ROOT=$BOOST_DIR
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D CMAKE_PREFIX_PATH:STRING="$ZLIB_DIR" \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=ON \
     -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
     -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
@@ -36,20 +31,12 @@ configure()
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D TPL_ENABLE_Zlib:BOOL=ON \
     -D TPL_ENABLE_Pthread:BOOL=ON \
-    -D Zlib_LIBRARY_DIRS:PATH=$ZLIB_DIR/lib \
-    -D Zlib_INCLUDE_DIRS:PATH=$ZLIB_DIR/include \
     -D TPL_ENABLE_BLAS:BOOL=ON \
-    -D BLAS_LIBRARY_DIRS:PATH=$ATLAS_DIR/lib \
-    -D BLAS_INCLUDE_DIRS:PATH=$ATLAS_DIR/include \
     -D TPL_ENABLE_LAPACK:BOOL=ON \
-    -D LAPACK_LIBRARY_DIRS:PATH=$ATLAS_DIR/lib \
-    -D LAPACK_INCLUDE_DIRS:PATH=$ATLAS_DIR/include \
     -D TPL_ENABLE_Boost:BOOL=ON \
-    -D Boost_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
-    -D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
     -D TPL_ENABLE_HDF5:BOOL=ON \
-    -D HDF5_LIBRARY_DIRS:PATH=$HDF5_DIR/lib \
-    -D HDF5_INCLUDE_DIRS:PATH=$HDF5_DIR/include \
+    -D HDF5_LIBRARY_DIRS:PATH="/usr/local/lib" \
+    -D HDF5_INCLUDE_DIRS:PATH="/usr/local/include" \
     -D TPL_ENABLE_METIS:BOOL=ON \
     -D METIS_LIBRARY_DIRS:PATH=$METIS_DIR/lib \
     -D METIS_INCLUDE_DIRS:PATH=$METIS_DIR/include \
@@ -83,9 +70,9 @@ configure()
     -D TPL_ENABLE_SuperLUDist:BOOL=ON \
     -D SuperLUDist_LIBRARY_DIRS:PATH=$SUPERLUDIST_DIR/lib \
     -D SuperLUDist_INCLUDE_DIRS:PATH=$SUPERLUDIST_DIR/include \
-    -D PYTHON_EXECUTABLE:PATH=$PYTHON_DIR/bin/python2.7 \
-    -D PYTHON_LIBRARY:PATH=$PYTHON_DIR/lib/libpython2.7.so \
-    -D PYTHON_INCLUDE:PATH=$PYTHON_DIR/include \
+    -D PYTHON_EXECUTABLE:PATH=/usr/local/bin/python2.7 \
+    -D PYTHON_LIBRARY:PATH=/usr/local/lib/libpython2.7.so \
+    -D PYTHON_INCLUDE_DIR:PATH=/usr/local/include \
     ..
   popd
 }
@@ -107,8 +94,8 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-TRILINOS_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$TRILINOS_DIR/lib:\$LD_LIBRARY_PATH
+export TRILINOS_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$TRILINOS_DIR/lib:\$DYLD_LIBRARY_PATH
 PYTHONPATH=\$TRILINOS_DIR/lib/python2.7/site-packages:\$PYTHONPATH
 EOF
   popd

@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=hypre
 pkgver=2.9.1a
+
+compatver=2.9
+libver=2.9.1
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver/src
@@ -25,15 +25,16 @@ configure()
   pushd $srcdir
 
   ./configure \
+    CFLAGS="-O3 -march=native -fPIC" \
+    CXXFLAGS="-O3 -march=native -fPIC" \
     --prefix=$destdir \
     --libdir=$destdir/lib \
-    --enable-shared \
     --with-blas=yes \
     --with-lapack=yes \
-    --with-blas-lib-dir=$ATLAS_DIR/lib \
-    --with-blas-libs="blas" \
-    --with-lapack-lib-dir=$ATLAS_DIR/lib \
-    --with-lapack-libs="lapack" \
+    --with-blas-lib-dir="" \
+    --with-blas-libs="-framework Accelerate" \
+    --with-lapack-lib-dir="" \
+    --with-lapack-libs="-framework Accelerate" \
     --without-babel \
     --without-mli \
     --without-fei \
@@ -56,10 +57,23 @@ package()
   pushd $srcdir
   make install
   popd
+
+  pushd $destdir/lib
+  mpicc -dynamiclib -install_name libHYPRE.dylib.${compatver} \
+     -Wl,-all_load libHYPRE.a \
+     -current_version ${libver} \
+     -compatibility_version ${compatver} \
+     -framework Accelerate \
+     -o libHYPRE.dylib.${libver}
+  ln -svf libHYPRE.dylib.${libver} libHYPRE.dylib.${compatver}
+  ln -svf libHYPRE.dylib.${libver} libHYPRE.dylib
+  rm -v libHYPRE.a
+  popd
+
   pushd $destdir
   cat << EOF > setenv
-HYPRE_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$HYPRE_DIR/lib:\$LD_LIBRARY_PATH
+export HYPRE_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$HYPRE_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -73,4 +87,4 @@ clean()
 #configure
 #build
 package
-clean
+#clean

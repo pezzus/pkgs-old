@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-
 pkgname=superlu
 pkgver=4.3
 
@@ -35,7 +33,7 @@ ARCH         = ar
 ARCHFLAGS    = cr
 RANLIB       = echo
 
-CC           = gcc
+CC           = cc
 CFLAGS       = -DPRNTlevel=0 -O3 -fPIC
 NOOPTS       = -O0 -fPIC
 FORTRAN      = gfortran
@@ -56,10 +54,12 @@ build()
   make lib
 
   # shared lib
-  gcc -shared -Wl,-soname=lib$pkgname.so.4 \
-      -Wl,--whole-archive $srcdir/lib/lib$pkgname.a.$pkgver \
-      -Wl,--no-whole-archive -L$ATLAS_DIR/lib -lblas -lm \
-      -o $srcdir/lib/lib$pkgname.so.$pkgver
+  cc -dynamiclib -install_name lib$pkgname.dylib.4 \
+      -Wl,-all_load $srcdir/lib/lib$pkgname.a.$pkgver \
+      -framework Accelerate -lm \
+      -compatibility_version 4 \
+      -current_version $pkgver \
+      -o $srcdir/lib/lib$pkgname.dylib.$pkgver
 
   popd
 }
@@ -71,8 +71,8 @@ package()
 
   install -d $destdir/lib
   install -m 755 $srcdir/lib/* $destdir/lib
-  ln -svf libsuperlu.so.$pkgver $destdir/lib/libsuperlu.so
-  ln -svf libsuperlu.so.$pkgver $destdir/lib/libsuperlu.so.4
+  ln -svf libsuperlu.dylib.$pkgver $destdir/lib/libsuperlu.dylib
+  ln -svf libsuperlu.dylib.$pkgver $destdir/lib/libsuperlu.dylib.4
 
   install -d $destdir/include
   install -m 644 $srcdir/SRC/*.h $destdir/include
@@ -81,8 +81,8 @@ package()
 
   pushd $destdir
   cat << EOF > setenv
-SUPERLU_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$SUPERLU_DIR/lib:\$LD_LIBRARY_PATH
+export SUPERLU_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$SUPERLU_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -92,8 +92,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
-#clean
+clean

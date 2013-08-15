@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=scotch
 pkgver=6.0.0
 
@@ -24,19 +21,19 @@ configure()
   pushd $srcdir
   cat <<EOF > Makefile.inc
 EXE =
-LIB = .so
+LIB = .a
 OBJ = .o
 
 MAKE = make
-AR = gcc
-ARFLAGS = -shared -Wl,--no-whole-archive \$(LDFLAGS) -o
+AR = ar
+ARFLAGS = cr
 CAT = cat
-CCS = gcc
+CCS = cc
 CCP = mpicc
-CCD = gcc
-CFLAGS = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -Drestrict=__restrict -DINTSIZE32
-CLIBFLAGS = -I$ZLIB_DIR/include -shared -fPIC
-LDFLAGS = -L$ZLIB_DIR/lib -lz -lm -lrt -lpthread
+CCD = mpicc
+CFLAGS = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_TIMING_OLD -DCOMMON_PTHREAD -DCOMMON_PTHREAD_BARRIER -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -Drestrict=__restrict -DINTSIZE32
+CLIBFLAGS = -fPIC
+LDFLAGS = -lm -lz
 CP = cp
 LEX = flex -Pscotchyy -olex.yy.c
 LN = ln
@@ -70,11 +67,82 @@ package()
 
   rm $destdir/{include,lib}/*metis*
 
+  pushd $destdir/lib
+  for lib in libscotcherr{,exit}; do
+    cc -dynamiclib -install_name $lib.6.0 \
+       -compatibility_version 6.0 \
+       -current_version $pkgver \
+       -Wl,-all_load $lib.a \
+       -o $lib.dylib.$pkgver
+    ln -svf $lib.dylib.$pkgver $lib.dylib
+    ln -svf $lib.dylib.$pkgver $lib.dylib.6
+    ln -svf $lib.dylib.$pkgver $lib.dylib.6.0
+    rm $lib.a
+  done
+
+  cc -dynamiclib -install_name libscotch.6.0 \
+     -compatibility_version 6.0 \
+     -current_version $pkgver \
+     -Wl,-all_load libscotch.a \
+     -lz -L. -lscotcherr \
+     -o libscotch.dylib.$pkgver
+  ln -svf libscotch.dylib.$pkgver libscotch.dylib
+  ln -svf libscotch.dylib.$pkgver libscotch.dylib.6
+  ln -svf libscotch.dylib.$pkgver libscotch.dylib.6.0
+  rm libscotch.a
+
+  cc -dynamiclib -install_name libesmumps.6.0 \
+     -compatibility_version 6.0 \
+     -current_version $pkgver \
+     -Wl,-all_load libesmumps.a \
+     -lz -L. -lscotcherr -lscotch \
+     -o libesmumps.dylib.$pkgver
+  ln -svf libesmumps.dylib.$pkgver libesmumps.dylib
+  ln -svf libesmumps.dylib.$pkgver libesmumps.dylib.6
+  ln -svf libesmumps.dylib.$pkgver libesmumps.dylib.6.0
+  rm libesmumps.a
+
+  for lib in libptscotcherr{,exit}; do
+    mpicc -dynamiclib -install_name $lib.6.0 \
+       -compatibility_version 6.0 \
+       -current_version $pkgver \
+       -Wl,-all_load $lib.a \
+       -o $lib.dylib.$pkgver
+    ln -svf $lib.dylib.$pkgver $lib.dylib
+    ln -svf $lib.dylib.$pkgver $lib.dylib.6
+    ln -svf $lib.dylib.$pkgver $lib.dylib.6.0
+    rm $lib.a
+  done
+
+  mpicc -dynamiclib -install_name libptscotch.6.0 \
+     -compatibility_version 6.0 \
+     -current_version $pkgver \
+     -Wl,-all_load libptscotch.a \
+     -lz -L. -lptscotcherr -lscotch \
+     -o libptscotch.dylib.$pkgver
+  ln -svf libptscotch.dylib.$pkgver libptscotch.dylib
+  ln -svf libptscotch.dylib.$pkgver libptscotch.dylib.6
+  ln -svf libptscotch.dylib.$pkgver libptscotch.dylib.6.0
+  rm libptscotch.a
+
+  cc -dynamiclib -install_name libptesmumps.6.0 \
+     -compatibility_version 6.0 \
+     -current_version $pkgver \
+     -Wl,-all_load libptesmumps.a \
+     -lz -L. -lptscotcherr -lptscotch -lscotch \
+     -o libptesmumps.dylib.$pkgver
+  ln -svf libptesmumps.dylib.$pkgver libptesmumps.dylib
+  ln -svf libptesmumps.dylib.$pkgver libptesmumps.dylib.6
+  ln -svf libptesmumps.dylib.$pkgver libptesmumps.dylib.6.0
+  rm libptesmumps.a
+
+  popd
+
   pushd $destdir
   cat << EOF > setenv
-SCOTCH_DIR=\$REPO/$reldir
+export SCOTCH_DIR=\$REPO/$reldir
 PATH=\$SCOTCH_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$SCOTCH_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$SCOTCH_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -86,6 +154,6 @@ clean()
 
 #prepare
 #configure
-build
+#build
 package
 #clean

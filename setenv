@@ -2,15 +2,6 @@
 
 export REPO=$HOME/fenics/pkgs
 
-# default environment
-PATH=/bin:/usr/bin
-DYLD_LIBRARY_PATH=
-DYLD_FRAMEWORK_PATH=
-INFOPATH=
-MANPATH=
-PKG_CONFIG_PATH=
-PYTHONPATH=
-
 setpkg()
 {
   echo "Setting $1-$2 ..."
@@ -22,68 +13,16 @@ setpkg()
   source $pkgdir/setenv
 }
 
-setpkg make 3.82
-setpkg automake 1.14
-setpkg autoconf 2.69
-setpkg pkg-config 0.28
-setpkg libtool 2.4.2
-setpkg m4 1.4.16
-setpkg xz 5.0.5
-setpkg tar 1.26
-setpkg diffutils 3.3
-setpkg bc 1.06
-setpkg texinfo 5.1
-
-setpkg gmp 5.1.2
-setpkg mpfr 3.1.2
-setpkg libmpc 1.0.1
-setpkg isl 0.11.2
-setpkg cloog 0.18.0
-setpkg gcc 4.8.1
-
-setpkg zlib 1.2.8
-setpkg ncurses 5.9
-setpkg readline 6.2
-setpkg gawk 4.1.0
-setpkg pcre 8.33
-setpkg libpng 1.6.3 
-setpkg slang 2.2.4
-setpkg libffi 3.0.13
-
-#setpkg bzip2 1.0.6
-setpkg expat 2.1.0
-setpkg gdbm 1.10
-setpkg tcl 8.6.0
-setpkg tk 8.6.0
-setpkg sqlite 3.7.17
-
-#setpkg python 2.7.5
-#setpkg valgrind 3.8.1
-#setpkg openmpi 1.6.5
-#setpkg icu 51.2
-#setpkg boost 1.54.0
-#setpkg atlas 3.10.1
-#setpkg lzo2 2.06
-#setpkg libarchive 3.1.2
-#setpkg cmake 2.8.11.2
-#setpkg metis 5.1.0
-#setpkg parmetis 4.0.3
-#setpkg suitesparse 4.2.1
-#setpkg python-distribute 0.6.49
-#setpkg python-nose 1.3.0
-#setpkg python-numpy 1.7.1
-#setpkg python-scipy 0.12.0
-#setpkg armadillo 3.900.7
-#setpkg unixodbc 2.3.1
-#setpkg nasm 2.10.09
-#setpkg libjpeg-turbo 1.3.0
-#setpkg libtiff 4.0.3
-#setpkg qt4 4.8.5
-#setpkg cgal 4.2
-#setpkg git 1.8.3.4
-#setpkg hdf5 1.8.11
-#setpkg scalapack 2.0.2
-#setpkg netcdf 4.3.0
+setpkg metis 5.1.0
+setpkg parmetis 4.0.3
+setpkg suitesparse 4.2.1
+setpkg superlu 4.3
+setpkg superlu_dist 3.3
+setpkg scalapack 2.0.2
+setpkg scotch 6.0.0
+setpkg mumps 4.10.0
+setpkg hypre 2.9.1a
+setpkg trilinos 11.4.1
 
 export PATH=${PATH%:}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH%:}

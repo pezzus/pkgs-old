@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=metis
 pkgver=5.1.0
 
@@ -43,9 +40,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-METIS_DIR=\$REPO/$reldir
+export METIS_DIR=\$REPO/$reldir
 PATH=\$METIS_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$METIS_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$METIS_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }

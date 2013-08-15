@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=scalapack
 pkgver=2.0.2
 
@@ -27,8 +24,8 @@ configure()
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D BUILD_SHARED_LIBS:BOOL=ON \
-    -D LAPACK_LIBRARIES:STRING="$ATLAS_DIR/lib/liblapack.so.3" \
-    -D BLAS_LIBRARIES:STRING="$ATLAS_DIR/lib/libblas.so.3" \
+    -D LAPACK_LIBRARIES:STRING="-framework Accelerate" \
+    -D BLAS_LIBRARIES:STRING="-framework Accelerate" \
     ..
   popd
 }
@@ -50,8 +47,8 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-SCALAPACK_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$SCALAPACK_DIR/lib:\$LD_LIBRARY_PATH
+export SCALAPACK_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$SCALAPACK_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }

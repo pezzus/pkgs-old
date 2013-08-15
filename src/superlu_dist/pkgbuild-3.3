@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=superlu_dist
 pkgver=3.3
 
@@ -27,7 +24,7 @@ DSuperLUroot = $srcdir
 DSUPERLULIB  = \$(DSuperLUroot)/lib/libsuperlu_dist.a.${pkgver}
 
 BLASDEF   = -DUSE_VENDOR_BLAS
-BLASLIB   = -L$ATLAS_DIR/lib -lblas
+BLASLIB   = -framework Accelerate
 
 METISLIB      = -L$METIS_DIR/lib -lmetis
 PARMETISLIB   = -L$PARMETIS_DIR/lib -lparmetis
@@ -57,14 +54,14 @@ build()
   make lib
 
   # shared lib
-  gcc -shared -Wl,-soname=lib$pkgname.so.3 \
-      -Wl,--whole-archive $srcdir/lib/lib$pkgname.a.$pkgver \
-      -Wl,--allow-multiple-definition \
-      -Wl,--no-whole-archive \
-        -L$PARMETIS_DIR/lib -lparmetis \
-        -L$METIS_DIR/lib -lmetis \
-        -L$ATLAS_DIR/lib -lblas -lm \
-      -o $srcdir/lib/lib$pkgname.so.$pkgver
+  mpicc -dynamiclib -install_name lib$pkgname.dylib.3 \
+      -Wl,-all_load $srcdir/lib/lib$pkgname.a.$pkgver \
+      -compatibility_version 3 \
+      -current_version 3.3 \
+      -L$PARMETIS_DIR/lib -lparmetis \
+      -L$METIS_DIR/lib -lmetis \
+      -framework Accelerate \
+      -o $srcdir/lib/lib$pkgname.dylib.$pkgver
 
   popd
 }
@@ -76,8 +73,8 @@ package()
 
   install -d $destdir/lib
   install -m 755 $srcdir/lib/* $destdir/lib
-  ln -svf lib$pkgname.so.$pkgver $destdir/lib/lib$pkgname.so
-  ln -svf lib$pkgname.so.$pkgver $destdir/lib/lib$pkgname.so.3
+  ln -svf lib$pkgname.dylib.$pkgver $destdir/lib/lib$pkgname.dylib
+  ln -svf lib$pkgname.dylib.$pkgver $destdir/lib/lib$pkgname.dylib.3
 
   install -d $destdir/include
   install -m 644 $srcdir/SRC/*.h $destdir/include
@@ -86,8 +83,8 @@ package()
 
   pushd $destdir
   cat << EOF > setenv
-SUPERLUDIST_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$SUPERLUDIST_DIR/lib:\$LD_LIBRARY_PATH
+export SUPERLUDIST_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$SUPERLUDIST_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -97,8 +94,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
+#prepare
+#configure
 build
 package
 clean

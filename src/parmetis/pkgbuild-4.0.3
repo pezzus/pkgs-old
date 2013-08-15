@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=parmetis
 pkgver=4.0.3
 
@@ -43,9 +40,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-PARMETIS_DIR=\$REPO/$reldir
+export PARMETIS_DIR=\$REPO/$reldir
 PATH=\$PARMETIS_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$PARMETIS_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$PARMETIS_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }

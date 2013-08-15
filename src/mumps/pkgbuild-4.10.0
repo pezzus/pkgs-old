@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
-
 pkgname=mumps
 pkgver=4.10.0
 
@@ -25,7 +22,7 @@ configure()
   cat <<EOF > Makefile.inc
 SCOTCHDIR = $SCOTCH_DIR
 ISCOTCH   = -I\$(SCOTCHDIR)/include
-LSCOTCH   = -L\$(SCOTCHDIR)/lib -lptesmumps -lesmumps -lptscotch -lscotch -lscotcherr -lz -lrt
+LSCOTCH   = -L\$(SCOTCHDIR)/lib -lptesmumps -lesmumps -lptscotch -lscotch -lscotcherr -lz
 
 LPORDDIR  = \$(topdir)/PORD/lib
 IPORD     = -I\$(topdir)/PORD/include
@@ -43,8 +40,8 @@ IORDERINGSC = \$(ISCOTCH) \$(IMETIS) \$(IPORD)
 
 PLAT    =
 LIBEXT  = .a
-OUTC    = -o 
-OUTF    = -o 
+OUTC    = -o
+OUTF    = -o
 RM = /bin/rm -f
 CC = mpicc
 FC = mpif90
@@ -57,15 +54,15 @@ LIBPAR = \$(SCALAP)
 # See point 17 in the FAQ to have more details on the compilation of mpich with gfortran
 INCSEQ =
 LIBSEQ =
-LIBBLAS = -L$ATLAS_DIR/lib -llapack -lblas
-LIBOTHERS = -lpthread
+LIBBLAS = -framework Accelerate
+LIBOTHERS = -lm
 #Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = -fPIC -O3 -march=native -DALLOW_NON_INIT
-OPTL    = -fPIC -O3 -march=native
-OPTC    = -fPIC -O3 -march=native
+OPTF    = -fPIC -O3 -m64 -DALLOW_NON_INIT
+OPTL    = -fPIC -O3 -m64
+OPTC    = -fPIC -O3 -m64
 #End Optimized options
 INCS = \$(INCPAR)
 LIBS = \$(LIBPAR)
@@ -93,9 +90,50 @@ package()
 
   rm $destdir/lib/dummy
 
+  pushd $destdir/lib
+  cc -dynamiclib -install_name libpord.4.10 \
+     -compatibility_version 4.10 \
+     -current_version $pkgver \
+     -Wl,-all_load libpord.a \
+     -o libpord.dylib.$pkgver
+  ln -svf libpord.dylib.$pkgver libpord.dylib
+  ln -svf libpord.dylib.$pkgver libpord.dylib.4
+  ln -svf libpord.dylib.$pkgver libpord.dylib.4.10
+  rm libpord.a
+
+  mpif90 -dynamiclib -install_name libmumps_common.4.10 \
+     -compatibility_version 4.10 \
+     -current_version $pkgver \
+     -Wl,-all_load libmumps_common.a \
+     -L. -lpord -L$PARMETIS_DIR/lib -lparmetis -L$SCOTCH_DIR/lib -lptscotch -lptesmumps \
+     -o libmumps_common.dylib.$pkgver
+  ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib
+  ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib.4
+  ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib.4.10
+  rm libmumps_common.a
+
+  for tt in {c,d,z,s}; do
+    mpif90 -dynamiclib -install_name lib${tt}mumps.4.10 \
+       -compatibility_version 4.10 \
+       -current_version $pkgver \
+       -Wl,-all_load lib${tt}mumps.a \
+       -L. -lmumps_common -L$SCALAPACK_DIR/lib -lscalapack \
+       -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch -lesmumps -lptscotcherr -lptscotcherrexit -lscotcherrexit -lscotcherr \
+       -L$METIS_DIR/lib -lmetis \
+       -framework Accelerate \
+       -o lib${tt}mumps.dylib.$pkgver
+    ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib
+    ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib.4
+    ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib.4.10
+    rm lib${tt}mumps.a
+  done
+
+  popd
+
   pushd $destdir
   cat << EOF > setenv
-MUMPS_DIR=\$REPO/$reldir
+export MUMPS_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$MUMPS_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -105,8 +143,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
+#prepare
+#configure
+#build
 package
-clean
+#clean
