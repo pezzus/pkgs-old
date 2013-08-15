@@ -15,6 +15,8 @@ MANPATH=
 PKG_CONFIG_PATH=
 PYTHONPATH=
 
+source /etc/profile.d/sge-binaries.sh
+
 setpkg()
 {
   echo "Setting $1-$2 ..."
@@ -112,3 +114,5 @@ export MANPATH=${MANPATH%:}
 export PKG_CONFIG_PATH=${PKG_CONFIG_PATH%:}
 export PYTHONPATH=${PYTHONPATH%:}
 
+export LC_ALL="C"
+export LANG="C"
