@@ -1,23 +1,18 @@
 #!/bin/bash -e
 
-pkgname=dolfin
-pkgver=dev
+pkgname=gmsh
+pkgver=2.8.2
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/dolfin
+srcdir=$tmpdir/gmsh-$pkgver-source
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  if [ -d $srcdir ]; then
-    pushd $srcdir
-    git pull
-    popd
-  else
-    git clone git@bitbucket.org:fenics-project/dolfin.git
-  fi
+  curl -O -L http://geuz.org/gmsh/src/gmsh-$pkgver-source.tgz
+  tar xvfz gmsh-$pkgver-source.tgz
   popd
 }
 
@@ -30,22 +25,16 @@ configure()
 
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D CMAKE_SHARED_LINKER_FLAGS:STRING="-L$MUMPS_DIR/lib -ldmumps" \
-    -D SCOTCH_DIR:PATH=$SCOTCH_DIR \
-    -D PETSC_DIR:PATH=$PETSC_DIR \
-    -D SLEPC_DIR:PATH=$SLEPC_DIR \
-    -D AMD_DIR:PATH=$SUITESPARSE_DIR \
-    -D UMFPACK_DIR:PATH=$SUITESPARSE_DIR \
-    -D CHOLMOD_DIR:PATH=$SUITESPARSE_DIR \
-    -D TRILINOS_DIR:PATH=$TRILINOS_DIR \
-    -D PARMETIS_DIR:PATH=$PARMETIS_DIR \
-    -D METIS_DIR:PATH=$METIS_DIR \
-    -D DOLFIN_ENABLE_OPENMP:BOOL=OFF \
-    -D PYTHON_EXECUTABLE="${_pythonbase}/bin/python2.7" \
+    -D ENABLE_WRAP_PYTHON:BOOL=ON \
+    -D ENABLE_MPI:BOOL=ON \
+    -D CMAKE_BUILD_TYPE:STRING="Release" \
+    -D ENABLE_BUILD_DYNAMIC:BOOL=ON \
+    -D ENABLE_BUILD_LIB:BOOL=ON \
+    -D ENABLE_BUILD_SHARED:BOOL=ON \
     -D PYTHON_LIBRARY="${_pythonbase}/lib/libpython2.7.dylib" \
     -D PYTHON_INCLUDE_DIR="${_pythonbase}/include/python2.7" \
     ../
-  
+ 
   popd
 }
 
@@ -69,11 +58,11 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-export DOLFIN_DIR=\$REPO/$reldir
-PATH=\$DOLFIN_DIR/bin:\$PATH
-PYTHONPATH=\$DOLFIN_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
-PKG_CONFIG_PATH=\$DOLFIN_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
-DYLD_LIBRARY_PATH=\$DOLFIN_DIR/lib:\$DYLD_LIBRARY_PATH
+export GMSH_DIR=\$REPO/$reldir
+PATH=\$GMSH_DIR/bin:\$PATH
+PYTHONPATH=\$GMSH_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+PKG_CONFIG_PATH=\$GMSH_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+DYLD_LIBRARY_PATH=\$GMSH_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -85,6 +74,6 @@ clean()
 
 #prepare
 #configure
-build
+#build
 package
 #clean

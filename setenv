@@ -24,12 +24,22 @@ setpkg mumps 4.10.0
 setpkg hypre 2.9.1a
 setpkg trilinos 11.4.1
 
+setpkg petsc 3.4.2
+setpkg python-petsc4py dev
+
+setpkg arpack dev
+setpkg slepc 3.4.1
+
+setpkg opencascade dev
+setpkg gmsh 2.8.2
+
 setpkg python-ufl dev
 setpkg python-uflacs dev
 setpkg python-ffc dev
 setpkg python-fiat dev
 setpkg python-instant dev
 setpkg python-ufc dev
+setpkg dolfin dev
 
 export PATH=${PATH%:}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH%:}

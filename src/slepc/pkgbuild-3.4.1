@@ -1,0 +1,66 @@
+#!/bin/bash -e
+
+pkgname=slepc
+pkgver=3.4.1
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -L http://www.grycap.upv.es/slepc/download/download.php?filename=slepc-${pkgver}.tar.gz > slepc-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+
+  ./configure \
+  --prefix=$destdir \
+  --download-blopex \
+  --with-arpack=1 \
+  --with-arpack-dir=$ARPACK_DIR/lib
+  
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make SLEPC_DIR=$PWD PETSC_ARCH=arch-installed-petsc
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make SLEPC_DIR=$srcdir  PETSC_ARCH=arch-installed-petsc install
+  #make SLEPC_DIR=$destdir PETSC_ARCH=arch-installed-petsc test
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export SLEPC_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$SLEPC_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$SLEPC_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

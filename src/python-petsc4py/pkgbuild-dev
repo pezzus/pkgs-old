@@ -1,22 +1,21 @@
 #!/bin/bash -e
 
-pkgname=python-fiat
+pkgname=python-petsc4py
 pkgver=dev
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/fiat
+srcdir=$tmpdir/petsc4py
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  if [ -d $srcdir ]; then
-    pushd $srcdir
-    git pull
-    popd
+  if [ -d petsc4py ]; then
+    cd petsc4py
+    hg pull
   else
-    git clone git@bitbucket.org:fenics-project/fiat.git
+    hg clone ssh://hg@bitbucket.org/mapdes/petsc4py
   fi
   popd
 }
@@ -59,7 +58,7 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
+#prepare
 configure
 build
 package

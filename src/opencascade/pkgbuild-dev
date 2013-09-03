@@ -1,37 +1,38 @@
 #!/bin/bash -e
 
-pkgname=python-fiat
+pkgname=opencascade
 pkgver=dev
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/fiat
+srcdir=$tmpdir/oce
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  if [ -d $srcdir ]; then
-    pushd $srcdir
-    git pull
-    popd
-  else
-    git clone git@bitbucket.org:fenics-project/fiat.git
-  fi
+  git clone https://github.com/tpaviot/oce.git
   popd
 }
 
 configure()
 {
-  pushd $srcdir
-  python setup.py config
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  cmake \
+    -D OCE_INSTALL_PREFIX:PATH=$destdir \
+    -D OCE_MULTITHREAD_LIBRARY:STRING="TBB" \
+    -D OCE_DRAW:BOOL=ON \
+    ../
+ 
   popd
 }
 
 build()
 {
-  pushd $srcdir
-  python setup.py build
+  pushd $srcdir/build
+  make -j5
   popd
 }
 
@@ -40,16 +41,17 @@ package()
   # remove old installation
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
-  pushd $srcdir
+  pushd $srcdir/build
   _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
-  python setup.py install --prefix=$destdir --optimize=1
+  make install
   popd
   pushd $destdir
   cat << EOF > setenv
-PATH=\$REPO/$reldir/bin:\$PATH
-PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
+export OCE_DIR=\$REPO/$reldir
+PATH=\$OCE_DIR/bin:\$PATH
+DYLD_LIBRARY_PATH=\$OCE_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -59,8 +61,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
+#prepare
+#configure
+#build
 package
 #clean

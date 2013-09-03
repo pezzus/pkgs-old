@@ -11,7 +11,13 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  git clone git@bitbucket.org:fenics-project/instant.git
+  if [ -d $srcdir ]; then
+    pushd $srcdir
+    git pull
+    popd
+  else
+    git clone git@bitbucket.org:fenics-project/instant.git
+  fi
   popd
 }
 
@@ -57,4 +63,4 @@ prepare
 configure
 build
 package
-clean
+#clean
