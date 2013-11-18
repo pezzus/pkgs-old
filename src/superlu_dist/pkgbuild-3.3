@@ -11,8 +11,11 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://crd-legacy.lbl.gov/~xiaoye/SuperLU/${pkgname}_${pkgver}.tar.gz
+  curl -O http://crd-legacy.lbl.gov/~xiaoye/SuperLU/${pkgname}_${pkgver}.tar.gz
   tar xvfz ${pkgname}_${pkgver}.tar.gz
+  popd
+  pushd $srcdir
+  patch -Np0 < $REPO/src/superlu_dist/duplicate_readrhs.patch
   popd
 }
 
@@ -26,8 +29,8 @@ DSUPERLULIB  = \$(DSuperLUroot)/lib/libsuperlu_dist.a.${pkgver}
 BLASDEF   = -DUSE_VENDOR_BLAS
 BLASLIB   = -framework Accelerate
 
-METISLIB      = -L$METIS_DIR/lib -lmetis
-PARMETISLIB   = -L$PARMETIS_DIR/lib -lparmetis
+METISLIB      = -L/usr/local/lib -lmetis
+PARMETISLIB   = -L/usr/local/lib -lparmetis
 
 FLIBS   =
 LIBS    = \$(DSUPERLULIB) \$(BLASLIB) \$(PARMETISLIB) \$(METISLIB)
@@ -58,8 +61,7 @@ build()
       -Wl,-all_load $srcdir/lib/lib$pkgname.a.$pkgver \
       -compatibility_version 3 \
       -current_version 3.3 \
-      -L$PARMETIS_DIR/lib -lparmetis \
-      -L$METIS_DIR/lib -lmetis \
+      -L/usr/local/lib -lparmetis -lmetis \
       -framework Accelerate \
       -o $srcdir/lib/lib$pkgname.dylib.$pkgver
 
@@ -94,8 +96,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
+prepare
+configure
 build
 package
 clean

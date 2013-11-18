@@ -1,0 +1,76 @@
+#!/bin/bash -e
+
+pkgname=vtk
+pkgver=6.0.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/VTK$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O http://www.vtk.org/files/release/${pkgver:0:3}/vtk-${pkgver}.tar.gz 
+  curl -O http://www.vtk.org/files/release/${pkgver:0:3}/vtkdata-${pkgver}.tar.gz 
+  tar xvfz vtk-${pkgver}.tar.gz
+  tar xvfz vtkdata-${pkgver}.tar.gz
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  CXX=mpic++ \
+  CC=mpicc \
+  cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
+    -D VTK_DATA_ROOT:FILEPATH=$tmpdir/VTKData$pkgver \
+    -D VTK_Group_Imaging:BOOL=ON \
+    -D VTK_Group_MPI:BOOL=ON \
+    -D VTK_Group_Views:BOOL=ON \
+    -D VTK_USE_SYSTEM_HDF5:BOOL=ON \
+    -D VTK_USE_SYSTEM_TIFF:BOOL=ON \
+    -D VTK_USE_SYSTEM_PNG:BOOL=ON \
+    -D VTK_USE_SYSTEM_ZLIB:BOOL=ON \
+    ..
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make -j8
+  popd
+}
+
+package()
+{
+  # remove old installation
+  #[ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  #pushd $srcdir/build
+  #make install
+  #popd
+  pushd $destdir
+  cat << EOF > setenv
+export VTK_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$VTK_DIR/lib:\$DYLD_LIBRARY_PATH
+PYTHONPATH=\$VTK_DIR/lib/python2.7/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+package
+#clean

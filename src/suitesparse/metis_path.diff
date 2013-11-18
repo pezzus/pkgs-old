@@ -19,7 +19,7 @@
                  ifeq ($(METIS_PATH), $(wildcard $(METIS_PATH)))
                      # METIS is available
 -                    LIB_WITH_PARTITION = $(METIS) \
-+                    LIB_WITH_PARTITION = -L$(METIS_MATH)/lib -lmetis \
++                    LIB_WITH_PARTITION = -L$(METIS_PATH)/lib -lmetis \
                          ../../CCOLAMD/Lib/libccolamd.a ../../CAMD/Lib/libcamd.a
 -                    I_WITH_PARTITION = -I$(METIS_PATH)/Lib \
 +                    I_WITH_PARTITION = -I$(METIS_PATH)/include \

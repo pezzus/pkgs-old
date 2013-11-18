@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_${pkgver}.tar.gz
+  curl -O http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_${pkgver}.tar.gz
   tar xvfz ${pkgname}_${pkgver}.tar.gz
   popd
 }
@@ -25,7 +25,7 @@ SUPERLULIB  = \$(SuperLUroot)/lib/libsuperlu.a.4.3
 TMGLIB      = libtmglib.a
 
 BLASDEF   = -DUSE_VENDOR_BLAS
-BLASLIB   = -L$ATLAS_DIR/lib -lblas
+BLASLIB   = 
 
 LIBS = \$(SUPERLULIB) \$(BLASLIB)
 

@@ -47,7 +47,7 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir/build
-  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  _pythonver=`python -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
   make install

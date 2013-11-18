@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 pkgname=trilinos
-pkgver=11.4.1
+pkgver=11.4.2
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver-Source
@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://trilinos.sandia.gov/download/files/${pkgname}-${pkgver}-Source.tar.bz2
+  curl -O http://trilinos.sandia.gov/download/files/${pkgname}-${pkgver}-Source.tar.bz2
   tar xvfj $pkgname-$pkgver-Source.tar.bz2
   popd
 }
@@ -38,11 +38,11 @@ configure()
     -D HDF5_LIBRARY_DIRS:PATH="/usr/local/lib" \
     -D HDF5_INCLUDE_DIRS:PATH="/usr/local/include" \
     -D TPL_ENABLE_METIS:BOOL=ON \
-    -D METIS_LIBRARY_DIRS:PATH=$METIS_DIR/lib \
-    -D METIS_INCLUDE_DIRS:PATH=$METIS_DIR/include \
+    -D METIS_LIBRARY_DIRS:PATH="/usr/local/lib" \
+    -D METIS_INCLUDE_DIRS:PATH="/usr/local/lib" \
     -D TPL_ENABLE_ParMETIS:BOOL=ON \
-    -D ParMETIS_LIBRARY_DIRS:PATH=$PARMETIS_DIR/lib \
-    -D ParMETIS_INCLUDE_DIRS:PATH=$PARMETIS_DIR/include \
+    -D ParMETIS_LIBRARY_DIRS:PATH="/usr/local/lib" \
+    -D ParMETIS_INCLUDE_DIRS:PATH="/usr/local/include" \
     -D ParMETIS_LIBRARY_NAMES:STRING="parmetis" \
     -D TPL_ENABLE_UMFPACK:BOOL=ON \
     -D UMFPACK_LIBRARY_DIRS:PATH=$SUITESPARSE_DIR/lib \
@@ -70,9 +70,6 @@ configure()
     -D TPL_ENABLE_SuperLUDist:BOOL=ON \
     -D SuperLUDist_LIBRARY_DIRS:PATH=$SUPERLUDIST_DIR/lib \
     -D SuperLUDist_INCLUDE_DIRS:PATH=$SUPERLUDIST_DIR/include \
-    -D PYTHON_EXECUTABLE:PATH=/usr/local/bin/python2.7 \
-    -D PYTHON_LIBRARY:PATH=/usr/local/lib/libpython2.7.so \
-    -D PYTHON_INCLUDE_DIR:PATH=/usr/local/include \
     ..
   popd
 }
@@ -107,7 +104,7 @@ clean()
 }
 
 #prepare
-configure
+#configure
 build
 package
 #clean

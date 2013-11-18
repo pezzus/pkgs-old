@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://ftp.mcs.anl.gov/pub/petsc/externalpackages/MUMPS_${pkgver}-p3.tar.gz
+  curl -O http://ftp.mcs.anl.gov/pub/petsc/externalpackages/MUMPS_${pkgver}-p3.tar.gz
   tar xvfz MUMPS_${pkgver}-p3.tar.gz
   popd
 }
@@ -28,8 +28,8 @@ LPORDDIR  = \$(topdir)/PORD/lib
 IPORD     = -I\$(topdir)/PORD/include
 LPORD     = -L\$(LPORDDIR) -lpord
 
-IMETIS    = -I$METIS_DIR/include -I$PARMETIS_DIR/include
-LMETIS    = -L$PARMETIS_DIR/lib -lparmetis -L$METIS_DIR/lib -lmetis
+IMETIS    = -I/usr/local/include
+LMETIS    = -L/usr/local/lib -lparmetis -lmetis
 
 ORDERINGSF = -Dpord -Dparmetis -Dmetis -Dscotch -Dptscotch
 ORDERINGSC = \$(ORDERINGSF)
@@ -105,7 +105,8 @@ package()
      -compatibility_version 4.10 \
      -current_version $pkgver \
      -Wl,-all_load libmumps_common.a \
-     -L. -lpord -L$PARMETIS_DIR/lib -lparmetis -L$SCOTCH_DIR/lib -lptscotch -lptesmumps \
+     -L. -lpord -L/usr/local/lib -lparmetis -lmetis \
+     -L$SCOTCH_DIR/lib -lptscotch -lptesmumps \
      -o libmumps_common.dylib.$pkgver
   ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib
   ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib.4
@@ -119,7 +120,7 @@ package()
        -Wl,-all_load lib${tt}mumps.a \
        -L. -lmumps_common -L$SCALAPACK_DIR/lib -lscalapack \
        -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch \
-       -L$METIS_DIR/lib -lmetis \
+       -L/usr/local/lib -lmetis \
        -framework Accelerate \
        -o lib${tt}mumps.dylib.$pkgver
     ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib
@@ -143,8 +144,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
+prepare
 configure
 build
 package
-#clean
+clean

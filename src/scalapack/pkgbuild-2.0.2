@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
+  curl -O http://www.netlib.org/scalapack/scalapack-${pkgver}.tgz
   tar xvfz $pkgname-$pkgver.tgz
   popd
 }

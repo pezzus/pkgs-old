@@ -1,0 +1,96 @@
+#!/bin/bash -e
+
+pkgname=petsc
+pkgver=3.4.3
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-$pkgver.tar.gz
+  tar xvfz $pkgname-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+
+  ./configure \
+  --prefix=$destdir \
+  --with-parmetis=1 \
+  --with-parmetis-dir=/usr/local \
+  --with-metis=1 \
+  --with-metis-dir=/usr/local \
+  --with-umfpack=1 \
+  --with-umfpack-dir=$SUITESPARSE_DIR \
+  --with-cholmod=1 \
+  --with-cholmod-dir=$SUITESPARSE_DIR \
+  --with-hypre=1 \
+  --with-hypre-dir=$HYPRE_DIR \
+  --with-pastix=1 \
+  --with-pastix-dir=$PASTIX_DIR \
+  --with-mumps=1 \
+  --with-mumps-dir=$MUMPS_DIR \
+  --with-scalapack=1 \
+  --with-scalapack-dir=$SCALAPACK_DIR \
+  --with-blacs=1 \
+  --with-blacs-lib=$SCALAPACK_DIR/lib/libscalapack.dylib \
+  --with-blacs-include=$SCALAPACK_DIR/include \
+  --with-superlu=1 \
+  --with-superlu-lib=$SUPERLU_DIR/lib/libsuperlu.dylib \
+  --with-superlu-include=$SUPERLU_DIR/include \
+  --with-superlu_dist=1 \
+  --with-superlu_dist-lib=$SUPERLUDIST_DIR/lib/libsuperlu_dist.dylib \
+  --with-superlu_dist-include=$SUPERLUDIST_DIR/include \
+  --with-ml=1 \
+  --with-ml-dir=$TRILINOS_DIR \
+  --with-scotch=1 \
+  --with-scotch-dir=$SCOTCH_DIR \
+  --with-ptscotch=1 \
+  --with-ptscotch-dir=$SCOTCH_DIR \
+  --with-debugging=no \
+  --with-shared-libraries=yes
+  
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make PETSC_DIR=$srcdir PETSC_ARCH=arch-darwin-c-opt all
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make PETSC_DIR=$srcdir  PETSC_ARCH=arch-darwin-c-opt install
+  make PETSC_DIR=$destdir PETSC_ARCH=arch-darwin-c-opt test
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export PETSC_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$PETSC_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$PETSC_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+#clean

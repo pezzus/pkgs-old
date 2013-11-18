@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.cise.ufl.edu/research/sparse/SuiteSparse/SuiteSparse-${pkgver}.tar.gz
+  curl -O http://www.cise.ufl.edu/research/sparse/SuiteSparse/SuiteSparse-${pkgver}.tar.gz
   tar xvfz SuiteSparse-${pkgver}.tar.gz
   popd
 
@@ -39,14 +39,14 @@ MAKE = make
 BLAS = -framework Accelerate
 LAPACK = -framework Accelerate
 XERBLA =
-GPU_BLAS_PATH =
-GPU_CONFIG =
-METIS_PATH = $METIS_DIR/lib
-METIS = $METIS_DIR/lib/libmetis.dylib
+GPU_BLAS_PATH = /usr/local/cuda
+GPU_CONFIG = -DGPU_BLAS -I\$(GPU_BLAS_PATH)/include
+METIS_PATH = /usr/local
+METIS = /usr/local/lib/libmetis.dylib
 UMFPACK_CONFIG =
-CHOLMOD_CONFIG = \$(GPU_CONFIG)
-SPQR_CONFIG =
-TBB =
+CHOLMOD_CONFIG = 
+SPQR_CONFIG = -I/usr/local/include
+TBB = -L/usr/local/lib -ltbb
 F77FLAGS = -march=native -O3 -m64 -fPIC
 CF = \$(CFLAGS) -march=native -O3 -fexceptions -m64 -fPIC
 CLEAN = *.o *.obj *.ln *.bb *.bbg *.da *.tcov *.gcov gmon.out *.bak *.d *.gcda *.gcno
@@ -74,8 +74,16 @@ make_shlib()
   
   echo "Building ${libname} ..."
   shift
-    
-  cc ${LDFLAGS} -dynamiclib -install_name ${sonamemajor} \
+
+  if [[ "${libname}" == "libspqr" ]]; then
+    local compiler=c++
+  else
+    local compiler=cc
+  fi
+
+  echo $compiler
+
+  $compiler ${LDFLAGS} -dynamiclib -install_name ${sonamemajor} \
     -Wl,-all_load ${libname}.a -framework Accelerate \
     -current_version ${soversion} \
     -compatibility_version ${compatversion} \
@@ -105,7 +113,8 @@ package()
   make_shlib libcamd.a -L. -lsuitesparseconfig
   make_shlib libcholmod.a -L. -lsuitesparseconfig \
     -lamd -lcolamd -lccolamd -lcamd \
-    -L$METIS_DIR/lib -lmetis
+    -L/usr/local/lib -lmetis \
+    -L/usr/local/cuda/lib -lcudart -lcublas
   make_shlib libumfpack.a -lm -L. -lsuitesparseconfig \
     -lcholmod -lamd
   make_shlib libbtf.a -L. -lsuitesparseconfig
@@ -114,7 +123,7 @@ package()
     -lamd -lbtf -lcolamd
   make_shlib librbio.a -L. -lsuitesparseconfig
   make_shlib libspqr.a -L. -lsuitesparseconfig \
-    -lcholmod
+    -lcholmod -L/usr/local/lib -ltbb
   make_shlib libldl.a -L. -lsuitesparseconfig
   popd
 
@@ -132,8 +141,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
 #clean

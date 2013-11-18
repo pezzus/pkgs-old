@@ -1,17 +1,17 @@
 #!/bin/bash -e
 
 pkgname=petsc
-pkgver=3.4.2
+pkgver=3.4.3
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
-reldir=opt/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver-dbg
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-$pkgver.tar.gz
+  curl -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-$pkgver.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -23,15 +23,17 @@ configure()
   ./configure \
   --prefix=$destdir \
   --with-parmetis=1 \
-  --with-parmetis-dir=$PARMETIS_DIR \
+  --with-parmetis-dir=/usr/local \
   --with-metis=1 \
-  --with-metis-dir=$METIS_DIR \
+  --with-metis-dir=/usr/local \
   --with-umfpack=1 \
   --with-umfpack-dir=$SUITESPARSE_DIR \
   --with-cholmod=1 \
   --with-cholmod-dir=$SUITESPARSE_DIR \
   --with-hypre=1 \
   --with-hypre-dir=$HYPRE_DIR \
+  --with-pastix=1 \
+  --with-pastix-dir=$PASTIX_DIR \
   --with-mumps=1 \
   --with-mumps-dir=$MUMPS_DIR \
   --with-scalapack=1 \
@@ -51,7 +53,7 @@ configure()
   --with-scotch-dir=$SCOTCH_DIR \
   --with-ptscotch=1 \
   --with-ptscotch-dir=$SCOTCH_DIR \
-  --with-debugging=no \
+  --with-debugging=yes \
   --with-shared-libraries=yes
   
   popd
@@ -60,7 +62,7 @@ configure()
 build()
 {
   pushd $srcdir
-  make PETSC_DIR=$srcdir PETSC_ARCH=arch-darwin-c-opt all
+  make PETSC_DIR=$srcdir PETSC_ARCH=arch-darwin-c-debug all
   popd
 }
 
@@ -70,8 +72,8 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir
-  make PETSC_DIR=$srcdir  PETSC_ARCH=arch-darwin-c-opt install
-  make PETSC_DIR=$destdir PETSC_ARCH=arch-darwin-c-opt test
+  make PETSC_DIR=$srcdir  PETSC_ARCH=arch-darwin-c-debug install
+  make PETSC_DIR=$destdir test
   popd
   pushd $destdir
   cat << EOF > setenv
@@ -89,6 +91,6 @@ clean()
 
 #prepare
 #configure
-build
+#build
 package
 #clean

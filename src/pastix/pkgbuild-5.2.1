@@ -1,0 +1,140 @@
+#!/bin/bash -e
+
+pkgname=pastix
+pkgver=5.2.1
+_release=4475
+_gforce=32932
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/pastix_release_${_release}
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O https://gforge.inria.fr/frs/download.php/${_gforce}/pastix_release_${_release}.tar.bz2
+  tar xvfj pastix_release_${_release}.tar.bz2
+  popd
+}
+
+configure()
+{
+  pushd $srcdir/src
+  cat <<EOF > config.in
+HOSTARCH    = i686_mac
+VERSIONBIT  = _64bit
+EXEEXT      =
+OBJEXT      = .o
+LIBEXT      = .a
+CCPROG      = cc
+CFPROG      = gfortran
+CF90PROG    = gfortran
+MCFPROG     = mpif90
+CF90CCPOPT  =
+COMMON_OPT  = -Wall
+CCFOPT      = -O3 \$(COMMON_OPT)
+CCFDEB      = -g3 \$(COMMON_OPT)
+NVCCOPT     = -O3 \$(COMMON_OPT)
+
+LKFOPT      =
+MKPROG      = make
+MPCCPROG    = mpicc
+MPCXXPROG   = mpic++
+CPP         = cpp
+ARFLAGS     = ruv
+ARPROG      = ar
+EXTRALIB    = -lm -L/usr/local/Cellar/gfortran/4.8.2/gfortran/lib -lgfortran
+
+VERSIONMPI  = _mpi
+VERSIONSMP  = _smp
+VERSIONSCH  = _static
+VERSIONINT  = _int
+VERSIONPRC  = _simple
+VERSIONFLT  = _real
+VERSIONORD  = _scotch
+
+ROOT       = ${destdir}
+INCLUDEDIR = \$(ROOT)/include
+LIBDIR     = \$(ROOT)/lib
+BINDIR     = \$(ROOT)/bin
+
+SHARED=1
+SOEXT=.dylib
+SHARED_FLAGS = -shared -Wl,-dylib_install_name -Wl,__SO_NAME__
+CCFDEB       := \$(CCFDEB) -fPIC
+CCFOPT       := \$(CCFOPT) -fPIC
+CFPROG       := \$(CFPROG) -fPIC
+
+VERSIONINT  = _int32
+CCTYPES     = -DINTSSIZE32
+
+CCTYPESFLT  =
+VERSIONPRC  = _double
+CCTYPESFLT := \$(CCTYPESFLT) -DPREC_DOUBLE
+
+CCPASTIX   := \$(CCPASTIX) -DCUDA_SM_VERSION=20
+NVCCOPT    := \$(NVCCOPT) -arch sm_20
+
+SCOTCH_HOME ?= ${SCOTCH_DIR}
+SCOTCH_INC ?= \$(SCOTCH_HOME)/include
+SCOTCH_LIB ?= \$(SCOTCH_HOME)/lib
+CCPASTIX   := \$(CCPASTIX) -I\$(SCOTCH_INC) -DDISTRIBUTED -DWITH_SCOTCH
+EXTRALIB   := \$(EXTRALIB) -L\$(SCOTCH_LIB) -lptscotch -lscotch -lptscotcherrexit
+
+EXTRALIB   := \$(EXTRALIB) -lpthread
+
+BLASLIB =  -lblas
+
+FOPT      := \$(CCFOPT)
+FDEB      := \$(CCFDEB)
+CCHEAD    := \$(CCPROG) \$(CCTYPES) \$(CCFOPT)
+CCFOPT    := \$(CCFOPT) \$(CCTYPES) \$(CCPASTIX)
+CCFDEB    := \$(CCFDEB) \$(CCTYPES) \$(CCPASTIX)
+NVCCOPT   := \$(NVCCOPT) \$(CCTYPES) \$(CCPASTIX)
+
+MAKE     = \$(MKPROG)
+CC       = \$(MPCCPROG)
+CFLAGS   = \$(CCFOPT) \$(CCTYPESFLT)
+FC       = \$(MCFPROG)
+FFLAGS   = \$(CCFOPT)
+LDFLAGS  = \$(EXTRALIB) \$(BLASLIB)
+EOF
+  popd
+}
+
+build()
+{
+  pushd $srcdir/src
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+
+  pushd $srcdir/src
+  make install
+  popd
+
+  pushd $destdir
+  cat << EOF > setenv
+export PASTIX_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$PASTIX_DIR/lib:\$DYLD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+prepare
+configure
+build
+package
+clean
+

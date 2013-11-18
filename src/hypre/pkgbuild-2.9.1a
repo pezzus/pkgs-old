@@ -15,7 +15,7 @@ prepare()
 {
   [[ -d $tmpdir ]] && rm -rf $tmpdir
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://ftp.mcs.anl.gov/pub/petsc/externalpackages/hypre-${pkgver}.tar.gz
+  curl -O http://ftp.mcs.anl.gov/pub/petsc/externalpackages/hypre-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -83,8 +83,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
-#clean
+clean

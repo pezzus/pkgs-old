@@ -11,7 +11,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N https://gforge.inria.fr/frs/download.php/31832/scotch_${pkgver}_esmumps.tar.gz
+  curl -O https://gforge.inria.fr/frs/download.php/31832/scotch_${pkgver}_esmumps.tar.gz
   tar xvfz scotch_${pkgver}_esmumps.tar.gz
   popd
 }
@@ -152,8 +152,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
-#clean
+clean

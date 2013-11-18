@@ -2,6 +2,9 @@
 
 export REPO=$HOME/fenics/pkgs
 
+export PATH=$PATH:/usr/local/cuda/bin
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/usr/local/cuda/lib
+
 setpkg()
 {
   echo "Setting $1-$2 ..."
@@ -13,8 +16,6 @@ setpkg()
   source $pkgdir/setenv
 }
 
-setpkg metis 5.1.0
-setpkg parmetis 4.0.3
 setpkg suitesparse 4.2.1
 setpkg superlu 4.3
 setpkg superlu_dist 3.3
@@ -22,16 +23,20 @@ setpkg scalapack 2.0.2
 setpkg scotch 6.0.0
 setpkg mumps 4.10.0
 setpkg hypre 2.9.1a
-setpkg trilinos 11.4.1
+setpkg pastix 5.2.1
+setpkg trilinos 11.4.2
 
-setpkg petsc 3.4.2
+setpkg petsc 3.4.3
 setpkg python-petsc4py dev
 
 setpkg arpack dev
-setpkg slepc 3.4.1
+setpkg slepc 3.4.3
 
+setpkg tao 2.2.0
+
+setpkg vtk 5.10.1
 setpkg opencascade dev
-setpkg gmsh 2.8.2
+setpkg gmsh 2.8.3
 
 setpkg python-ufl dev
 setpkg python-uflacs dev

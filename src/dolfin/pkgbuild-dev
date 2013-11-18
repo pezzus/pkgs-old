@@ -26,24 +26,20 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  _pythonbase="/usr/local/Frameworks/Python.framework/Versions/Current"
-
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D CMAKE_SHARED_LINKER_FLAGS:STRING="-L$MUMPS_DIR/lib -ldmumps" \
     -D SCOTCH_DIR:PATH=$SCOTCH_DIR \
     -D PETSC_DIR:PATH=$PETSC_DIR \
+    -D TAO_DIR:PATH=$TAO_DIR \
     -D SLEPC_DIR:PATH=$SLEPC_DIR \
     -D AMD_DIR:PATH=$SUITESPARSE_DIR \
     -D UMFPACK_DIR:PATH=$SUITESPARSE_DIR \
     -D CHOLMOD_DIR:PATH=$SUITESPARSE_DIR \
     -D TRILINOS_DIR:PATH=$TRILINOS_DIR \
     -D PARMETIS_DIR:PATH=$PARMETIS_DIR \
-    -D METIS_DIR:PATH=$METIS_DIR \
+    -D PASTIX_DIR:PATH=$PASTIX_DIR \
     -D DOLFIN_ENABLE_OPENMP:BOOL=OFF \
-    -D PYTHON_EXECUTABLE="${_pythonbase}/bin/python2.7" \
-    -D PYTHON_LIBRARY="${_pythonbase}/lib/libpython2.7.dylib" \
-    -D PYTHON_INCLUDE_DIR="${_pythonbase}/include/python2.7" \
     ../
   
   popd
@@ -62,7 +58,7 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir/build
-  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  _pythonver=`python -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
   make install
@@ -83,8 +79,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
+prepare
+configure
 build
 package
 #clean
