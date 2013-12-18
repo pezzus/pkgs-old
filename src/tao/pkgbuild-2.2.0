@@ -36,7 +36,7 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir
-  TAO_DIR=$srcdir PETSC_DIR=$REPO/tmp/petsc/petsc-3.4.3 python conf/install.py -destDir=$destdir
+  TAO_DIR=$srcdir python conf/install.py -destDir=$destdir
   popd
   pushd $destdir
   cat << EOF > setenv
@@ -51,7 +51,7 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
+prepare
 configure
 build
 package

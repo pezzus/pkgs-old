@@ -1,5 +1,11 @@
 #!/bin/bash -e
 
+# require
+source $REPO/opt/metis-5.1.0/setenv
+source $REPO/opt/openblas-0.2.8/setenv
+# for tests
+export DYLD_LIBRARY_PATH
+
 pkgname=suitesparse
 pkgver=4.2.1
 
@@ -29,26 +35,40 @@ RANLIB = ranlib
 ARCHIVE = \$(AR) \$(ARFLAGS)
 CP = cp -f
 MV = mv -f
-CC = cc
-F77 = gfortran
-F77LIB =
-LIB = -lm
 INSTALL_LIB = $destdir/lib
 INSTALL_INCLUDE = $destdir/include
 MAKE = make
-BLAS = -framework Accelerate
-LAPACK = -framework Accelerate
+
+BLAS = -L$OPENBLAS_DIR/lib -lopenblas
+LAPACK = -L$OPENBLAS_DIR/lib -lopenblas
 XERBLA =
-GPU_BLAS_PATH = /usr/local/cuda
-GPU_CONFIG = -DGPU_BLAS -I\$(GPU_BLAS_PATH)/include
-METIS_PATH = /usr/local
-METIS = /usr/local/lib/libmetis.dylib
+
+GPU_BLAS_PATH =
+GPU_CONFIG =
+
+METIS_PATH = $METIS_DIR
+METIS = $METIS_DIR/lib/libmetis.dylib
+
 UMFPACK_CONFIG =
+
 CHOLMOD_CONFIG = 
-SPQR_CONFIG = -I/usr/local/include
+
+SPQR_CONFIG = -DHAVE_TBB
+
 TBB = -L/usr/local/lib -ltbb
-F77FLAGS = -march=native -O3 -m64 -fPIC
-CF = \$(CFLAGS) -march=native -O3 -fexceptions -m64 -fPIC
+
+F77 = $LOCALGCC/bin/gfortran
+F77FLAGS = -Wa,-q -march=native -O3 -m64 -fPIC
+F77LIB =
+
+CC = $LOCALGCC/bin/gcc
+CF = \$(CFLAGS) -Wa,-q -march=native -O3 -fexceptions -m64 -fPIC
+
+CXX = $LOCALGCC/bin/g++
+CPPCLAGS = \$(CFLAGS) -Wa,-q -march=native -O3 -fexceptions -m64 -fPIC
+
+LIB = -lm
+
 CLEAN = *.o *.obj *.ln *.bb *.bbg *.da *.tcov *.gcov gmon.out *.bak *.d *.gcda *.gcno
 EOF
   popd
@@ -76,15 +96,14 @@ make_shlib()
   shift
 
   if [[ "${libname}" == "libspqr" ]]; then
-    local compiler=c++
+    local compiler=$LOCALGCC/bin/g++
   else
-    local compiler=cc
+    local compiler=$LOCALGCC/bin/gcc
   fi
 
-  echo $compiler
-
   $compiler ${LDFLAGS} -dynamiclib -install_name ${sonamemajor} \
-    -Wl,-all_load ${libname}.a -framework Accelerate \
+    -Wl,-all_load ${libname}.a \
+    -L$OPENBLAS_DIR/lib -lopenblas \
     -current_version ${soversion} \
     -compatibility_version ${compatversion} \
     "$@" -o ${soname}
@@ -113,8 +132,7 @@ package()
   make_shlib libcamd.a -L. -lsuitesparseconfig
   make_shlib libcholmod.a -L. -lsuitesparseconfig \
     -lamd -lcolamd -lccolamd -lcamd \
-    -L/usr/local/lib -lmetis \
-    -L/usr/local/cuda/lib -lcudart -lcublas
+    -L$METIS_DIR/lib -lmetis
   make_shlib libumfpack.a -lm -L. -lsuitesparseconfig \
     -lcholmod -lamd
   make_shlib libbtf.a -L. -lsuitesparseconfig
@@ -141,8 +159,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-#clean

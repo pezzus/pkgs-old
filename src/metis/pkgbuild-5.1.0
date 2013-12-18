@@ -8,10 +8,13 @@ srcdir=$tmpdir/$pkgname-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
+export CC=$LOCALGCC/bin/gcc
+export CFLAGS="-O2 -march=native -Wa,-q"
+
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-${pkgver}.tar.gz
+  curl -O http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -52,8 +55,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

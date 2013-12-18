@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# apparently with framework Accelerate single-precision
+# tests fail
+BLASLIB="-L/usr/local/Cellar/openblas/0.2.8/lib -lopenblas"
+#BLASLIB="-framework Accelerate"
+
 pkgname=superlu
 pkgver=4.3
 
@@ -25,7 +30,7 @@ SUPERLULIB  = \$(SuperLUroot)/lib/libsuperlu.a.4.3
 TMGLIB      = libtmglib.a
 
 BLASDEF   = -DUSE_VENDOR_BLAS
-BLASLIB   = 
+BLASLIB   = $BLASLIB
 
 LIBS = \$(SUPERLULIB) \$(BLASLIB)
 
@@ -33,13 +38,13 @@ ARCH         = ar
 ARCHFLAGS    = cr
 RANLIB       = echo
 
-CC           = cc
-CFLAGS       = -DPRNTlevel=0 -O3 -fPIC
-NOOPTS       = -O0 -fPIC
-FORTRAN      = gfortran
-FFLAGS       = -O3 -fPIC
+CC           = $LOCALGCC/bin/gcc
+CFLAGS       = -DPRNTlevel=0 -Wa,-q -O3 -fPIC
+NOOPTS       = -O0 -fPIC -Wa,-q
+FORTRAN      = $LOCALGCC/bin/gfortran
+FFLAGS       = -Wa,-q -O3 -fPIC
 LOADER       = \$(CC)
-LOADOPTS     =
+LOADOPTS     = -Wa,-q
 CDEFS        = -DAdd_
 
 MATLAB = 
@@ -54,9 +59,11 @@ build()
   make lib
 
   # shared lib
-  cc -dynamiclib -install_name lib$pkgname.dylib.4 \
+  $LOCALGCC/bin/gcc \
+      -dynamiclib -install_name lib$pkgname.dylib.4 \
       -Wl,-all_load $srcdir/lib/lib$pkgname.a.$pkgver \
-      -framework Accelerate -lm \
+      $BLASLIB \
+      -lm \
       -compatibility_version 4 \
       -current_version $pkgver \
       -o $srcdir/lib/lib$pkgname.dylib.$pkgver
@@ -92,8 +99,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

@@ -89,8 +89,8 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
+prepare
+configure
+build
 package
 #clean

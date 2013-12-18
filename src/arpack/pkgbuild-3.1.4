@@ -1,0 +1,78 @@
+#!/bin/bash -e
+
+export CC=$LOCALGCC/bin/gcc
+export F77=$LOCALGCC/bin/gfortran
+export OMPI_CC=$LOCALGCC/bin/gcc
+export OMPI_CXX=$LOCALGCC/bin/g++
+export OMPI_F77=$LOCALGCC/bin/gfortran
+export CFLAGS="-O2 -march=native -Wa,-q"
+export FFLAGS="-O2 -march=native -Wa,-q"
+
+source $REPO/opt/openblas-0.2.8/setenv
+export MPILIBS="`pkg-config --libs ompi-f77` "
+
+pkgname=arpack
+pkgver=3.1.4
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-ng-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+_baseurl=http://forge.scilab.org/index.php/p/arpack-ng/downloads/get/
+
+prepare()
+{
+    mkdir -pv $tmpdir && pushd $tmpdir
+    curl -O -L $_baseurl/arpack-ng_${pkgver}.tar.gz
+    tar xvfz $pkgname-ng_$pkgver.tar.gz
+    popd
+}
+
+configure()
+{
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
+
+    ../configure \
+        MPIF77=mpif77 \
+        --disable-dependency-tracking \
+        --with-blas="-L$OPENBLAS_DIR/lib -lopenblas" \
+        --with-lapack="-L$OPENBLAS_DIR/lib -lopenblas" \
+        --prefix=$destdir \
+        --enable-mpi
+
+    popd
+}
+
+build()
+{
+    pushd $srcdir/build
+    make
+    popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export ARPACK_DIR=\$REPO/$reldir
+PATH=\$ARPACK_DIR/bin:\$PATH
+DYLD_LIBRARY_PATH=\$ARPACK_DIR/lib:\$DYLD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$ARPACK_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+MANPATH=\$ARPACK_DIR/share/man:\$MANPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

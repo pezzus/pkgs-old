@@ -1,0 +1,42 @@
+#!/bin/bash -e
+
+contains_elm()
+{
+    local e
+    for e in "${@:2}"; do 
+        [[ "$e" == "$1" ]] && return 0; 
+    done
+    return 1
+}
+
+REPO=$HOME/fenics/pkgs
+LOCALGCC=$REPO/opt/gcc-4.8.2
+
+pkgsource="$REPO/src/$1/pkgbuild-$2"
+
+if [ ! -f $pkgsource ]; then
+    echo "'$pkgsource' not found!"
+    exit
+fi
+
+source $pkgsource
+
+if [ "x$3" == "x" ]; then
+    # do everything
+    prepare
+    configure
+    build
+    package
+    #clean
+else
+    shift 2
+    validcmd=("prepare" "configure" "build" "package" "clean")
+    for cmd in ${@}; do
+        if contains_elm "$cmd" "${validcmd[@]}"; then
+            eval "$cmd"
+        else
+            echo "'$cmd' not valid!"
+            exit
+        fi
+    done
+fi

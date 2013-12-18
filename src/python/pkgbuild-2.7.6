@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 pkgname=python
-pkgver=2.7.5
+pkgver=2.7.6
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/Python-$pkgver
@@ -29,28 +29,34 @@ prepare()
 
 configure()
 {
-  mkdir -pv $srcdir/build && pushd $srcdir/build
+    [ -d "$srcdir/build" ] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  CPPFLAGS="-I$TCL_DIR/include -I/opt/X11/include -I$TK_DIR/include -I$LIBFFI_DIR/include -I$LIBEXPAT_DIR/include" \
-  LDFLAGS="-L$TCL_DIR/lib -L/opt/X11/lib -L$TK_DIR/lib -L$LIBFFI_DIR/lib -L$LIBEXPAT_DIR/lib" \
-  ../configure \
-    --prefix=$destdir \
-    --datarootdir=$destdir/share \
-    --datadir=$destdir/share \
-    --enable-shared \
-    --with-threads \
-    --enable-unicode=ucs4 \
-    --with-system-expat \
-    --with-system-ffi \
-    --with-dbmliborder=gdbm:ndbm
-  popd
+  #CPPFLAGS="-I$TCL_DIR/include -I/opt/X11/include -I$TK_DIR/include -I$LIBFFI_DIR/include -I$LIBEXPAT_DIR/include" \
+  #LDFLAGS="-L$TCL_DIR/lib -L/opt/X11/lib -L$TK_DIR/lib -L$LIBFFI_DIR/lib -L$LIBEXPAT_DIR/lib" \
+
+    ../configure \
+        CC=$LOCALGCC/bin/gcc \
+        CXX=$LOCALGCC/bin/g++ \
+        --prefix=$destdir \
+        --datarootdir=$destdir/share \
+        --datadir=$destdir/share \
+        --enable-shared \
+        --with-threads
+
+    #--enable-unicode=ucs4 \
+    #--with-system-expat \
+    #--with-system-ffi \
+    #--with-dbmliborder=gdbm:ndbm
+
+    popd
 }
 
 build()
 {
-  pushd $srcdir/build
-  make
-  popd
+    pushd $srcdir/build
+    make
+    popd
 }
 
 package()
@@ -80,8 +86,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-configure
-#build
-#package
-#clean

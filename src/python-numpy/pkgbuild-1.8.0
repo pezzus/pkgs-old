@@ -1,0 +1,81 @@
+#!/bin/bash -e
+
+# required
+OPENBLAS_DIR=/usr/local/Cellar/openblas/0.2.8
+source $REPO/opt/suitesparse-4.2.1/setenv
+
+pkgname=python-numpy
+pkgver=1.8.0
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/numpy-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O -L http://downloads.sourceforge.net/numpy/numpy-${pkgver}.tar.gz
+  tar xvfz numpy-$pkgver.tar.gz
+  popd
+}
+
+configure()
+{
+  pushd $srcdir
+  cat <<EOF > site.cfg
+[DEFAULT]
+library_dirs = $OPENBLAS_DIR/lib
+include_dirs = $OPENBLAS_DIR/include
+EOF
+
+  export CC=$LOCALGCC/bin/gcc
+  export FC=$LOCALGCC/bin/gfortran
+  export CFLAGS="-O3 -mtune=native -arch x86_64"
+  export CFLAGS="-O3 -mtune=native -arch i386 -arch x86_64"
+  export ARCHFLAGS="-arch x86_64"
+  export LDFLAGS="-Wall -undefined dynamic_lookup -bundle -arch i386 -arch x86_64"
+  export PYTHONPATH=$REPO/opt/python-2.7.6/lib/python2.7/site-packages
+  $REPO/opt/python-2.7.6/bin/python setup.py config
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  export CC=$LOCALGCC/bin/gcc
+  export FC=$LOCALGCC/bin/gfortran
+  export CFLAGS="-O3 -mtune=native -arch i386 -arch x86_64"
+  export ARCHFLAGS="-arch x86_64"
+  export LDFLAGS="-Wall -undefined dynamic_lookup -bundle -arch i386 -arch x86_64"
+  export PYTHONPATH=$REPO/opt/python-2.7.6/lib/python2.7/site-packages
+  $REPO/opt/python-2.7.6/bin/python setup.py build
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  mkdir -pv $destdir/lib/python$_pythonver/site-packages
+  export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
+  python setup.py install --prefix=$destdir --optimize=1
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+NUMPY_DIR=\$REPO/$reldir
+PATH=\$NUMPY_DIR/bin:\$PATH
+PYTHONPATH=\$NUMPY_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

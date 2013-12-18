@@ -1,0 +1,55 @@
+#!/bin/bash -e
+
+pkgname=openblas
+pkgver=0.2.8
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/OpenBLAS-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+export CC=$LOCALGCC/bin/gcc
+export FC=$LOCALGCC/bin/gfortran
+
+prepare()
+{
+    mkdir -pv $tmpdir && pushd $tmpdir
+    curl -O -L http://github.com/xianyi/OpenBLAS/archive/v${pkgver}.tar.gz
+    tar xvfz v$pkgver.tar.gz
+    popd
+}
+
+configure() 
+{
+    pushd $srcdir
+    popd
+}
+
+build()
+{
+    pushd $srcdir
+    make COMMON_OPT="-O2 -Wa,-q" USE_OPENMP=1 OMP_NUM_THREADS=8 all
+    popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make PREFIX=$destdir install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export OPENBLAS_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$OPENBLAS_DIR/lib:\$DYLD_LIBRARY_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

@@ -16,35 +16,37 @@ setpkg()
   source $pkgdir/setenv
 }
 
+setpkg metis 5.1.0
 setpkg suitesparse 4.2.1
 setpkg superlu 4.3
+
+setpkg parmetis 4.0.3
 setpkg superlu_dist 3.3
-setpkg scalapack 2.0.2
-setpkg scotch 6.0.0
-setpkg mumps 4.10.0
-setpkg hypre 2.9.1a
-setpkg pastix 5.2.1
-setpkg trilinos 11.4.2
+#setpkg scalapack 2.0.2
+#setpkg scotch 6.0.0
+#setpkg mumps 4.10.0
+#setpkg hypre 2.9.1a
+#setpkg pastix 5.2.1
+#setpkg trilinos 11.4.3
 
-setpkg petsc 3.4.3
-setpkg python-petsc4py dev
+#setpkg petsc 3.4.3
+#setpkg python-petsc4py dev
 
-setpkg arpack dev
-setpkg slepc 3.4.3
+#setpkg slepc 3.4.3
 
-setpkg tao 2.2.0
+#setpkg tao 2.2.0
 
-setpkg vtk 5.10.1
-setpkg opencascade dev
-setpkg gmsh 2.8.3
+#setpkg vtk 6.0.0
+#setpkg opencascade dev
+#setpkg gmsh 2.8.3
 
-setpkg python-ufl dev
-setpkg python-uflacs dev
-setpkg python-ffc dev
-setpkg python-fiat dev
-setpkg python-instant dev
-setpkg python-ufc dev
-setpkg dolfin dev
+#setpkg python-ufl dev
+#setpkg python-uflacs dev
+#setpkg python-ffc dev
+#setpkg python-fiat dev
+#setpkg python-instant dev
+#setpkg python-ufc dev
+#setpkg dolfin dev
 
 export PATH=${PATH%:}
 export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH%:}

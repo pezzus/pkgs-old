@@ -1,0 +1,72 @@
+#!/bin/bash -e
+
+pkgname=gcc
+pkgver=4.8.2
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O http://ftp.gnu.org/gnu/gcc/gcc-${pkgver}/gcc-${pkgver}.tar.bz2
+  tar xvfj $pkgname-$pkgver.tar.bz2
+
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  ../configure \
+    --prefix=$destdir \
+    --mandir=$destdir/share/man \
+    --infodir=$destdir/share/info \
+    --libdir=$destdir/lib \
+    --libexecdir=$destdir/lib \
+    --with-tune=native \
+    --with-gmp=/usr/local \
+    --with-mpfr=/usr/local \
+    --with-mpc=/usr/local \
+    --with-isl=/usr/local \
+    --with-cloog=/usr/local \
+    --enable-cloog-backend=isl \
+    --enable-bootstrap \
+    --enable-checking=release \
+    --enable-languages=c,c++,fortran
+
+  popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make bootstrap
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [[ -d $destdir ]] && rm -rfv $destdir
+  
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+
+#prepare
+#configure
+#build
+#package
+#clean

@@ -1,5 +1,20 @@
 #!/bin/bash -e
 
+# required
+source $REPO/opt/metis-5.1.0/setenv
+source $REPO/opt/parmetis-4.0.3/setenv
+# for tests
+export DYLD_LIBRARY_PATH
+
+export OMPI_CC=$LOCALGCC/bin/gcc
+export OMPI_CXX=$LOCALGCC/bin/g++
+export OMPI_F77=$LOCALGCC/bin/gfortran
+
+# apparently with framework Accelerate single-precision
+# tests fail
+BLASLIB="-L/usr/local/Cellar/openblas/0.2.8/lib -lopenblas"
+#BLASLIB="-framework Accelerate"
+
 pkgname=superlu_dist
 pkgver=3.3
 
@@ -27,10 +42,10 @@ DSuperLUroot = $srcdir
 DSUPERLULIB  = \$(DSuperLUroot)/lib/libsuperlu_dist.a.${pkgver}
 
 BLASDEF   = -DUSE_VENDOR_BLAS
-BLASLIB   = -framework Accelerate
+BLASLIB   = $BLASLIB
 
-METISLIB      = -L/usr/local/lib -lmetis
-PARMETISLIB   = -L/usr/local/lib -lparmetis
+METISLIB      = -L$METIS_DIR/lib -lmetis
+PARMETISLIB   = -L$PARMETIS_DIR/lib -lparmetis
 
 FLIBS   =
 LIBS    = \$(DSUPERLULIB) \$(BLASLIB) \$(PARMETISLIB) \$(METISLIB)
@@ -40,12 +55,12 @@ ARCHFLAGS    = cr
 RANLIB       = echo
 
 CC           = mpicc
-CFLAGS       = -DDEBUGlevel=0 -DPRNTlevel=1 -DPROFlevel=0 -O3 -fPIC
-NOOPTS       = -O0 -fPIC
+CFLAGS       = -DDEBUGlevel=0 -DPRNTlevel=1 -DPROFlevel=0 -Wa,-q -O3 -fPIC
+NOOPTS       = -Wa,-q -O0 -fPIC
 FORTRAN      = mpif90
-FFLAGS       = -O3 -fPIC
+FFLAGS       = -Wa,-q -O3 -fPIC
 LOADER       = \$(CC)
-LOADOPTS     =
+LOADOPTS     = -Wa,-q
 CDEFS        = -DAdd_
 EOF
   popd
@@ -61,8 +76,9 @@ build()
       -Wl,-all_load $srcdir/lib/lib$pkgname.a.$pkgver \
       -compatibility_version 3 \
       -current_version 3.3 \
-      -L/usr/local/lib -lparmetis -lmetis \
-      -framework Accelerate \
+      -L$PARMETIS_DIR/lib -lparmetis \
+      -L$METIS_DIR/lib -lmetis \
+      $BLASLIB \
       -o $srcdir/lib/lib$pkgname.dylib.$pkgver
 
   popd
@@ -96,8 +112,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean
