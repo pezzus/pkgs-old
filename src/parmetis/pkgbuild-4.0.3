@@ -1,8 +1,6 @@
 #!/bin/bash -e
 
-export OMPI_CC=$LOCALGCC/bin/gcc
-export OMPI_CXX=$LOCALGCC/bin/g++
-export CFLAGS="-O2 -march=native -Wa,-q"
+source $REPO/setenv
 
 pkgname=parmetis
 pkgver=4.0.3

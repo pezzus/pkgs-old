@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# deps
+source $REPO/setenv
+
 pkgname=hypre
 pkgver=2.9.1a
 
@@ -25,16 +28,18 @@ configure()
   pushd $srcdir
 
   ./configure \
-    CFLAGS="-O3 -march=native -fPIC" \
-    CXXFLAGS="-O3 -march=native -fPIC" \
+      CC="mpicc" \
+      CXX="mpicxx" \
+      CFLAGS="-O3 -march=native -fPIC" \
+      CXXFLAGS="-O3 -march=native -fPIC" \
     --prefix=$destdir \
     --libdir=$destdir/lib \
     --with-blas=yes \
     --with-lapack=yes \
-    --with-blas-lib-dir="" \
-    --with-blas-libs="-framework Accelerate" \
-    --with-lapack-lib-dir="" \
-    --with-lapack-libs="-framework Accelerate" \
+    --with-blas-lib-dir="-L$OPENBLAS_DIR/dir" \
+    --with-blas-libs="-lopenblas" \
+    --with-lapack-lib-dir="-L$OPENBLAS_DIR/dir" \
+    --with-lapack-libs="-lopenblas" \
     --without-babel \
     --without-mli \
     --without-fei \
@@ -63,7 +68,7 @@ package()
      -Wl,-all_load libHYPRE.a \
      -current_version ${libver} \
      -compatibility_version ${compatver} \
-     -framework Accelerate \
+     -L$OPENBLAS_DIR/lib -lopenblas \
      -o libHYPRE.dylib.${libver}
   ln -svf libHYPRE.dylib.${libver} libHYPRE.dylib.${compatver}
   ln -svf libHYPRE.dylib.${libver} libHYPRE.dylib
@@ -83,8 +88,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

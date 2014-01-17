@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-pkgname=pcre
-pkgver=8.33
+source $REPO/setenv
+
+pkgname=valgrind
+pkgver=3.9.0
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
@@ -11,21 +13,19 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  curl -O ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/${pkgname}-${pkgver}.tar.bz2
+  curl -O -L http://valgrind.org/downloads/${pkgname}-${pkgver}.tar.bz2
   tar xvfj $pkgname-$pkgver.tar.bz2
   popd
 }
 
 configure()
 {
-  # out of source doesn't work
   pushd $srcdir
+
   ./configure \
     --prefix=$destdir \
-    --enable-pcre{16,32} \
-    --enable-jit \
-    --enable-utf \
-    --enable-unicode-properties
+    --mandir=$destdir/share/man \
+    --enable-only64bit
   popd
 }
 
@@ -46,11 +46,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-export PCRE_DIR=\$REPO/$reldir
-PATH=\$PCRE_DIR/bin:\$PATH
-MANPATH=\$PCRE_DIR/share/man:\$MANPATH
-DYLD_LIBRARY_PATH=\$PCRE_DIR/lib:\$DYLD_LIBRARY_PATH
-PKG_CONFIG_PATH=\$PCRE_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+PATH=\$REPO/$reldir/bin:\$PATH
+MANPATH=\$REPO/$reldir/share/man:\$MANPATH
+INFOPATH=\$REPO/$reldir/share/info:\$INFOPATH
 EOF
   popd
 }
@@ -60,8 +58,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

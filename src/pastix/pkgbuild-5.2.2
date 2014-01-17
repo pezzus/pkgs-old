@@ -1,27 +1,33 @@
 #!/bin/bash -e
 
+# deps
+source $REPO/setenv
+LIBGFORTRAN_DIR=/usr/local/Cellar/gfortran/4.8.2/gfortran/lib/
+
 pkgname=pastix
-pkgver=5.2.1
-_release=4475
-_gforce=32932
+pkgver=5.2.2
+_release=edcb9ab
+_gforce=33176
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/pastix_release_${_release}
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
+_baseurl=https://gforge.inria.fr/frs/download.php/${_gforce}
+
 prepare()
 {
-  mkdir -pv $tmpdir && pushd $tmpdir
-  curl -O https://gforge.inria.fr/frs/download.php/${_gforce}/pastix_release_${_release}.tar.bz2
-  tar xvfj pastix_release_${_release}.tar.bz2
-  popd
+    mkdir -pv $tmpdir && pushd $tmpdir
+    curl -O $_baseurl/pastix_release_${_release}.tar.bz2
+    tar xvfj pastix_release_${_release}.tar.bz2
+    popd
 }
 
 configure()
 {
-  pushd $srcdir/src
-  cat <<EOF > config.in
+    pushd $srcdir/src
+    cat <<EOF > config.in
 HOSTARCH    = i686_mac
 VERSIONBIT  = _64bit
 EXEEXT      =
@@ -33,9 +39,9 @@ CF90PROG    = gfortran
 MCFPROG     = mpif90
 CF90CCPOPT  =
 COMMON_OPT  = -Wall
-CCFOPT      = -O3 \$(COMMON_OPT)
+CCFOPT      = -O3 -march=native \$(COMMON_OPT)
 CCFDEB      = -g3 \$(COMMON_OPT)
-NVCCOPT     = -O3 \$(COMMON_OPT)
+NVCCOPT     = -O3 -march=native \$(COMMON_OPT)
 
 LKFOPT      =
 MKPROG      = make
@@ -44,7 +50,7 @@ MPCXXPROG   = mpic++
 CPP         = cpp
 ARFLAGS     = ruv
 ARPROG      = ar
-EXTRALIB    = -lm -L/usr/local/Cellar/gfortran/4.8.2/gfortran/lib -lgfortran
+EXTRALIB    = -lm
 
 VERSIONMPI  = _mpi
 VERSIONSMP  = _smp
@@ -76,15 +82,15 @@ CCTYPESFLT := \$(CCTYPESFLT) -DPREC_DOUBLE
 CCPASTIX   := \$(CCPASTIX) -DCUDA_SM_VERSION=20
 NVCCOPT    := \$(NVCCOPT) -arch sm_20
 
-SCOTCH_HOME ?= ${SCOTCH_DIR}
+SCOTCH_HOME ?= $SCOTCH_DIR
 SCOTCH_INC ?= \$(SCOTCH_HOME)/include
 SCOTCH_LIB ?= \$(SCOTCH_HOME)/lib
 CCPASTIX   := \$(CCPASTIX) -I\$(SCOTCH_INC) -DDISTRIBUTED -DWITH_SCOTCH
 EXTRALIB   := \$(EXTRALIB) -L\$(SCOTCH_LIB) -lptscotch -lscotch -lptscotcherrexit
 
-EXTRALIB   := \$(EXTRALIB) -lpthread
+EXTRALIB   := \$(EXTRALIB) -lpthread -L$LIBGFORTRAN_DIR -lgfortran
 
-BLASLIB =  -lblas
+BLASLIB =  -L$OPENBLAS_DIR/lib -lopenblas
 
 FOPT      := \$(CCFOPT)
 FDEB      := \$(CCFDEB)
@@ -100,14 +106,14 @@ FC       = \$(MCFPROG)
 FFLAGS   = \$(CCFOPT)
 LDFLAGS  = \$(EXTRALIB) \$(BLASLIB)
 EOF
-  popd
+    popd
 }
 
 build()
 {
-  pushd $srcdir/src
-  make
-  popd
+    pushd $srcdir/src
+    make all
+    popd
 }
 
 package()
@@ -131,10 +137,4 @@ clean()
 {
   rm -rfv $tmpdir
 }
-
-prepare
-configure
-build
-package
-clean
 

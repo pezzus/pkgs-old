@@ -1,5 +1,15 @@
 #!/bin/bash -e
 
+# deps
+
+#source $REPO/opt/readline-6.2/setenv
+#export MACOSX_DEPLOYMENT_TARGET=10.9
+
+#source $REPO/setenv
+
+unset PYTHONHOME
+unset PYTHONPATH
+
 pkgname=python
 pkgver=2.7.6
 
@@ -12,19 +22,8 @@ prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
   curl -O -L http://www.python.org/ftp/python/${pkgver%rc?}/Python-${pkgver}.tar.xz
-  tar xvfJ Python-$pkgver.tar.xz
+  tar xvfJ Python-${pkgver}.tar.xz
   popd
-
-  pushd $srcdir
-
-  # Enable built-in SQLite module to load extensions (fix FS#22122)
-  #sed "/SQLITE_OMIT_LOAD_EXTENSION/d" > setup.py
-
-  rm -r Modules/expat
-  rm -r Modules/zlib
-  rm -r Modules/_ctypes/{darwin,libffi}*
-  popd
-
 }
 
 configure()
@@ -32,22 +31,12 @@ configure()
     [ -d "$srcdir/build" ] && rm -rf $srcdir/build
     mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  #CPPFLAGS="-I$TCL_DIR/include -I/opt/X11/include -I$TK_DIR/include -I$LIBFFI_DIR/include -I$LIBEXPAT_DIR/include" \
-  #LDFLAGS="-L$TCL_DIR/lib -L/opt/X11/lib -L$TK_DIR/lib -L$LIBFFI_DIR/lib -L$LIBEXPAT_DIR/lib" \
-
     ../configure \
-        CC=$LOCALGCC/bin/gcc \
-        CXX=$LOCALGCC/bin/g++ \
         --prefix=$destdir \
+        --enable-ipv6 \
         --datarootdir=$destdir/share \
         --datadir=$destdir/share \
-        --enable-shared \
-        --with-threads
-
-    #--enable-unicode=ucs4 \
-    #--with-system-expat \
-    #--with-system-ffi \
-    #--with-dbmliborder=gdbm:ndbm
+        --without-gcc
 
     popd
 }

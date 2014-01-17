@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+
 pkgname=readline
 pkgver=6.2
 
@@ -8,39 +10,46 @@ srcdir=$tmpdir/$pkgname-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
+_patchurl=http://ftp.gnu.org/gnu/readline/readline-${pkgver}-patches
+
 prepare()
 {
-  mkdir -pv $tmpdir && pushd $tmpdir
-  curl -O http://ftp.gnu.org/gnu/readline/$pkgname-$pkgver.tar.gz
-  tar xvfz $pkgname-$pkgver.tar.gz
-  for p in {1..4}; do
-    curl -O http://ftp.gnu.org/gnu/readline/readline-${pkgver}-patches/readline${pkgver//./}-00$p
-    pushd $srcdir
-    patch -Np0 -i ../readline${pkgver//./}-00$p
-    popd
-  done
-  pushd $srcdir
-  patch -Np0 -i $REPO/src/readline/shobj_darwin.patch
-  popd
+    mkdir -pv $tmpdir && pushd $tmpdir
+    curl -O http://ftp.gnu.org/gnu/readline/$pkgname-$pkgver.tar.gz
+    tar xvfz $pkgname-$pkgver.tar.gz
+    
+    for p in {1..5}; do
+        curl -O $_patchurl/readline${pkgver//./}-00$p
+        pushd $srcdir
+        patch -Np0 -i ../readline${pkgver//./}-00$p
+        popd
+    done
   
-  popd
+    pushd $srcdir
+    patch -Np0 -i $REPO/src/readline/shobj_darwin.patch
+    popd
+  
+    popd
 }
 
 configure()
 {
-  mkdir -pv $srcdir/build && pushd $srcdir/build
-  ../configure \
-    --prefix=$destdir \
-    CPPFLAGS="-I$NCURSES_DIR/include" \
-    LDFLAGS="-L$NCURSES_DIR/lib"
-  popd
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
+  
+    ../configure \
+        --build="x86_64-apple-darwin12.4.0" \
+        --prefix=$destdir \
+        --enable-multibyte
+
+    popd
 }
 
 build()
 {
-  pushd $srcdir/build
-  make SHLIBS="-L$NCURSES_DIR/lib -lncursesw"
-  popd
+    pushd $srcdir/build
+    make
+    popd
 }
 
 package()
@@ -66,8 +75,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

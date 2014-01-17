@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+source $REPO/setenv
 
 pkgname=python-nose
 pkgver=1.3.0
@@ -14,8 +13,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://pypi.python.org/packages/source/n/nose/nose-${pkgver}.tar.gz \
-    --no-check-certificate
+  curl -O -L http://pypi.python.org/packages/source/n/nose/nose-${pkgver}.tar.gz
   tar xvfz nose-$pkgver.tar.gz
   popd
 }
@@ -40,7 +38,7 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir
-  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  _pythonver=`python -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
   python setup.py install --prefix=$destdir --optimize=1

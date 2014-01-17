@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+export CC=gcc
+export CXX=g++
+
 pkgname=python-ufc
 pkgver=dev
 
@@ -67,8 +71,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-#clean

@@ -2,7 +2,8 @@
 
 # apparently with framework Accelerate single-precision
 # tests fail
-BLASLIB="-L/usr/local/Cellar/openblas/0.2.8/lib -lopenblas"
+source $REPO/setenv
+BLASLIB="-L$OPENBLAS_DIR/lib -lopenblas"
 #BLASLIB="-framework Accelerate"
 
 pkgname=superlu
@@ -38,11 +39,11 @@ ARCH         = ar
 ARCHFLAGS    = cr
 RANLIB       = echo
 
-CC           = $LOCALGCC/bin/gcc
-CFLAGS       = -DPRNTlevel=0 -Wa,-q -O3 -fPIC
-NOOPTS       = -O0 -fPIC -Wa,-q
-FORTRAN      = $LOCALGCC/bin/gfortran
-FFLAGS       = -Wa,-q -O3 -fPIC
+CC           = cc
+CFLAGS       = -DPRNTlevel=0 -O3 -march=native -fPIC
+NOOPTS       = -O0 -fPIC
+FORTRAN      = gfortran
+FFLAGS       = -O3 -march=native -fPIC
 LOADER       = \$(CC)
 LOADOPTS     = -Wa,-q
 CDEFS        = -DAdd_

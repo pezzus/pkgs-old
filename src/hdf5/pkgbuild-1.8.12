@@ -1,10 +1,12 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+# deps
+source $REPO/opt/gcc-4.8.2/setenv
+source $REPO/opt/openmpi-1.7.3/setenv
+export PATH
 
 pkgname=hdf5
-pkgver=1.8.11
+pkgver=1.8.12
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
@@ -14,8 +16,8 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${pkgver}.tar.bz2
-  tar xvfj $pkgname-$pkgver.tar.bz2
+  curl -O -L http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${pkgver}.tar.bz2
+  tar xvfj $pkgname-${pkgver}.tar.bz2
   popd
 
   pushd $srcdir
@@ -29,6 +31,7 @@ prepare()
 
 configure()
 {
+  [[ -d $srcdir/build ]] && rm -rd $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
   # enable shared libs by default for h5cc config utility
@@ -41,14 +44,17 @@ configure()
     F9X="mpif90" \
     RUNPARALLEL="mpirun" \
     OMPI_MCA_disable_memory_allocator=1 \
+    --host="x86_64-apple-darwin13.0.0" \
+    --target="x86_64-apple-darwin13.0.0" \
     --prefix=$destdir \
     --with-pthread=/usr/lib/ \
     --enable-linux-lfs \
     --enable-unsupported \
     --enable-shared \
     --disable-static \
+    --with-zlib=/usr \
+    --enable-filters=all \
     --enable-production=yes \
-    --with-zlib=$ZLIB_DIR \
     --with-default-api-version=v18 \
     --enable-parallel=yes \
     --enable-cxx \
@@ -76,15 +82,10 @@ package()
 
   pushd $destdir
   cat << EOF > setenv
-HDF5_DIR=\$REPO/$reldir
+export HDF5_DIR=\$REPO/$reldir
 PATH=\$HDF5_DIR/bin:\$PATH
-LD_LIBRARY_PATH=\$HDF5_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$HDF5_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
-  popd
-
-  # override system gmake
-  pushd $destdir/bin
-  #ln -svf make gmake
   popd
 }
 
@@ -93,8 +94,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
-package
-clean

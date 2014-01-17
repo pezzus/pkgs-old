@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+# deps
+source $REPO/setenv
+export HDF5_DIR=/usr/local
+
 pkgname=trilinos
 pkgver=11.4.3
 
@@ -23,26 +27,34 @@ configure()
 
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
+    -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=ON \
     -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
-    -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
-    -D BUILD_SHARED_LIBS:BOOL=ON \
     -D ML_ENABLE_MLapi:BOOL=ON \
     -D TPL_ENABLE_MPI:BOOL=ON \
     -D TPL_ENABLE_Zlib:BOOL=ON \
     -D TPL_ENABLE_Pthread:BOOL=ON \
     -D TPL_ENABLE_BLAS:BOOL=ON \
+    -D BLAS_LIBRARY_DIRS:PATH="$OPENBLAS_DIR/lib" \
+    -D BLAS_INCLUDE_DIRS:PATH="$OPENBLAS_DIR/include" \
+    -D BLAS_LIBRARY_NAMES:STRING="openblas" \
     -D TPL_ENABLE_LAPACK:BOOL=ON \
+    -D LAPACK_LIBRARY_DIRS:PATH="$OPENBLAS_DIR/lib" \
+    -D LAPACK_INCLUDE_DIRS:PATH="$OPENBLAS_DIR/include" \
+    -D LAPACK_LIBRARY_NAMES:STRING="openblas" \
     -D TPL_ENABLE_Boost:BOOL=ON \
+    -D Boost_LIBRARY_DIRS:PATH="$BOOST_DIR/lib" \
+    -D Boost_INCLUDE_DIRS:PATH="$BOOST_DIR/include" \
     -D TPL_ENABLE_HDF5:BOOL=ON \
-    -D HDF5_LIBRARY_DIRS:PATH="/usr/local/lib" \
-    -D HDF5_INCLUDE_DIRS:PATH="/usr/local/include" \
+    -D HDF5_LIBRARY_DIRS:PATH="$HDF5_DIR/lib" \
+    -D HDF5_INCLUDE_DIRS:PATH="$HDF5_DIR/include" \
     -D TPL_ENABLE_METIS:BOOL=ON \
-    -D METIS_LIBRARY_DIRS:PATH="/usr/local/lib" \
-    -D METIS_INCLUDE_DIRS:PATH="/usr/local/lib" \
+    -D METIS_LIBRARY_DIRS:PATH="$METIS_DIR/lib" \
+    -D METIS_INCLUDE_DIRS:PATH="$METIS_DIR/include" \
     -D TPL_ENABLE_ParMETIS:BOOL=ON \
-    -D ParMETIS_LIBRARY_DIRS:PATH="/usr/local/lib" \
-    -D ParMETIS_INCLUDE_DIRS:PATH="/usr/local/include" \
+    -D ParMETIS_LIBRARY_DIRS:PATH="$PARMETIS_DIR/lib" \
+    -D ParMETIS_INCLUDE_DIRS:PATH="$PARMETIS_DIR/include" \
     -D ParMETIS_LIBRARY_NAMES:STRING="parmetis" \
     -D TPL_ENABLE_UMFPACK:BOOL=ON \
     -D UMFPACK_LIBRARY_DIRS:PATH=$SUITESPARSE_DIR/lib \
@@ -56,6 +68,7 @@ configure()
     -D Scotch_LIBRARY_NAMES:STRING="ptesmumps;esmumps;ptscotch;scotch;ptscotcherr;scotcherr" \
     -D TPL_ENABLE_SCALAPACK:BOOL=ON \
     -D SCALAPACK_LIBRARY_DIRS:PATH=$SCALAPACK_DIR/lib \
+    -D SCALAPACK_LIBRARY_NAMES:STRING="scalapack" \
     -D SCALAPACK_INCLUDE_DIRS:PATH=$SCALAPACK_DIR/include \
     -D TPL_ENABLE_MUMPS:BOOL=ON \
     -D MUMPS_LIBRARY_DIRS:PATH=$MUMPS_DIR/lib \
@@ -70,8 +83,10 @@ configure()
     -D TPL_ENABLE_SuperLUDist:BOOL=ON \
     -D SuperLUDist_LIBRARY_DIRS:PATH=$SUPERLUDIST_DIR/lib \
     -D SuperLUDist_INCLUDE_DIRS:PATH=$SUPERLUDIST_DIR/include \
+    -D PYTHON_LIBRARY:PATH="/usr/local/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib" \
     ..
-  popd
+
+    popd
 }
 
 build()
@@ -103,8 +118,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
-package
-#clean

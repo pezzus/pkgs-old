@@ -1,0 +1,75 @@
+#!/bin/bash -e
+
+source $REPO/opt/gcc-4.8.2/setenv
+export PATH
+
+pkgname=openmpi
+pkgver=1.7.3
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O -L http://www.open-mpi.org/software/ompi/v1.7/downloads/openmpi-${pkgver}.tar.bz2
+  tar xvfj openmpi-${pkgver}.tar.bz2
+  popd
+}
+
+configure()
+{
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
+
+    ../configure \
+        CC=gcc \
+        CXX=g++ \
+        FC=gfortran \
+        F77=gfortran \
+        --prefix=$destdir \
+        --mandir=$destdir/share/man \
+        --libdir=$destdir/lib \
+        --enable-mpi-cxx \
+        --enable-static \
+        --with-threads=posix \
+        --enable-smp-locks \
+        --enable-pretty-print-stacktrace
+
+    popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export OPENMPI_DIR=\$REPO/$reldir
+PATH=\$OPENMPI_DIR/bin:\$PATH
+DYLD_LIBRARY_PATH=\$OPENMPI_DIR/lib:\$DYLD_LIBRARY_PATH
+MANPATH=\$OPENMPI_DIR/share/man:\$MANPATH
+INFOPATH=\$OPENMPI_DIR/share/info:\$INFOPATH
+PKG_CONFIG_PATH=\$OPENMPI_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

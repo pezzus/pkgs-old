@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# deps
+source $REPO/setenv
+
 pkgname=scotch
 pkgver=6.0.0
 
@@ -31,7 +34,7 @@ CAT = cat
 CCS = cc
 CCP = mpicc
 CCD = mpicc
-CFLAGS = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_TIMING_OLD -DCOMMON_PTHREAD -DCOMMON_PTHREAD_BARRIER -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -Drestrict=__restrict -DINTSIZE32
+CFLAGS = -O3 -march=native -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_TIMING_OLD -DCOMMON_PTHREAD -DCOMMON_PTHREAD_BARRIER -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -Drestrict=__restrict -DINTSIZE32
 CLIBFLAGS = -fPIC
 LDFLAGS = -lm -lz
 CP = cp
@@ -152,8 +155,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

@@ -1,21 +1,20 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+source $REPO/setenv
 
-pkgname=python-scipy
-pkgver=0.12.0
+pkgname=python-setuptools
+pkgver=2.0.1
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/scipy-$pkgver
+srcdir=$tmpdir/setuptools-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/scipy/scipy-${pkgver}.tar.gz
-  tar xvfz scipy-$pkgver.tar.gz
+  curl -O -L http://pypi.python.org/packages/source/s/setuptools/setuptools-${pkgver}.tar.gz
+  tar xvfz setuptools-$pkgver.tar.gz
   popd
 }
 
@@ -39,16 +38,15 @@ package()
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
   pushd $srcdir
-  _pythonver=`python2 -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
+  _pythonver=`python -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
   python setup.py install --prefix=$destdir --optimize=1
   popd
   pushd $destdir
   cat << EOF > setenv
-SCIPY_DIR=\$REPO/$reldir
-PATH=\$SCIPY_DIR/bin:\$PATH
-PYTHONPATH=\$SCIPY_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
 EOF
   popd
 }
@@ -58,8 +56,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-build
-package
-clean

@@ -1,10 +1,9 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+source $REPO/setenv
 
 pkgname=cgal
-pkgver=4.2
+pkgver=4.3
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/CGAL-$pkgver
@@ -14,8 +13,8 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N https://gforge.inria.fr/frs/download.php/32360/CGAL-4.2.tar.bz2
-  tar xvfj CGAL-$pkgver.tar.bz2
+  curl -O -L https://gforge.inria.fr/frs/download.php/32995/CGAL-${pkgver}.tar.xz
+  tar xvfJ CGAL-${pkgver}.tar.xz
   popd
 }
 
@@ -24,12 +23,13 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  export GMP_DIR
-  export MPFR_DIR
+  export GMP_DIR=/usr/local
+  export MPFR_DIR=/usr/local
   export BOOST_ROOT=$BOOST_DIR
+  export CC=gcc
+  export CXX=g++
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D CMAKE_PREFIX_PATH:STRING="$ZLIB_DIR" \
     -D WITH_ZLIB:BOOL=ON \
     ..
   popd
@@ -52,8 +52,8 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-CGAL_DIR=\$REPO/$reldir
-LD_LIBRARY_PATH=\$CGAL_DIR/lib:\$LD_LIBRARY_PATH
+export CGAL_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$CGAL_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -63,8 +63,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-build
-package
-clean

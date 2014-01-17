@@ -12,8 +12,7 @@ prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
   curl -O http://ftp.gnu.org/gnu/gcc/gcc-${pkgver}/gcc-${pkgver}.tar.bz2
-  tar xvfj $pkgname-$pkgver.tar.bz2
-
+  tar xvfj ${pkgname}-${pkgver}.tar.bz2
   popd
 }
 
@@ -37,7 +36,7 @@ configure()
     --enable-cloog-backend=isl \
     --enable-bootstrap \
     --enable-checking=release \
-    --enable-languages=c,c++,fortran
+    --enable-languages=c,c++,fortran,objc
 
   popd
 }
@@ -45,19 +44,60 @@ configure()
 build()
 {
   pushd $srcdir/build
-  make bootstrap
+  make profiledbootstrap
   popd
 }
 
 package()
 {
-  # remove old installation
-  [[ -d $destdir ]] && rm -rfv $destdir
+    # remove old installation
+    [[ -d $destdir ]] && rm -rfv $destdir
   
-  # install new one
-  pushd $srcdir/build
-  make install
-  popd
+    # install new one
+    pushd $srcdir/build
+    make install
+    popd
+
+    # many packages expect this symlinks
+    ln -s gcc $destdir/bin/cc
+
+    # POSIX conformance launcher scripts for c89 and c99
+    cat > $destdir/bin/c89 <<"EOF"
+#!/bin/sh
+fl="-std=c89"
+for opt; do
+  case "$opt" in
+    -ansi|-std=c89|-std=iso9899:1990) fl="";;
+    -std=*) echo "`basename $0` called with non ANSI/ISO C option $opt" >&2
+	    exit 1;;
+  esac
+done
+exec gcc $fl ${1+"$@"}
+EOF
+
+    cat > $destdir/bin/c99 <<"EOF"
+#!/bin/sh
+fl="-std=c99"
+for opt; do
+  case "$opt" in
+    -std=c99|-std=iso9899:1999) fl="";;
+    -std=*) echo "`basename $0` called with non ISO C99 option $opt" >&2
+	    exit 1;;
+  esac
+done
+exec gcc $fl ${1+"$@"}
+EOF
+
+    pushd $destdir
+    cat << EOF > setenv
+export GCC_DIR=\$REPO/$reldir
+PATH=\$GCC_DIR/bin:\$PATH
+DYLD_LIBRARY_PATH=\$GCC_DIR/lib:\$DYLD_LIBRARY_PATH
+MANPATH=\$GCC_DIR/share/man:\$MANPATH
+INFOPATH=\$GCC_DIR/share/info:\$INFOPATH
+EOF
+    popd
+
 }
 
 clean()
@@ -65,8 +105,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
-#package
-#clean

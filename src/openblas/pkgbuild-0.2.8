@@ -8,9 +8,6 @@ srcdir=$tmpdir/OpenBLAS-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
-export CC=$LOCALGCC/bin/gcc
-export FC=$LOCALGCC/bin/gfortran
-
 prepare()
 {
     mkdir -pv $tmpdir && pushd $tmpdir
@@ -28,7 +25,7 @@ configure()
 build()
 {
     pushd $srcdir
-    make COMMON_OPT="-O2 -Wa,-q" USE_OPENMP=1 OMP_NUM_THREADS=8 all
+    make all
     popd
 }
 

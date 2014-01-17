@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+export PATH
+
 pkgname=vtk
 pkgver=5.10.1
 
@@ -20,29 +23,33 @@ prepare()
 
 configure()
 {
-  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
-  mkdir -pv $srcdir/build && pushd $srcdir/build
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  CXX=mpic++ \
-  CC=mpicc \
-  cmake \
-    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
-    -D BUILD_SHARED_LIBS:BOOL=ON \
-    -D BUILD_TESTING:BOOL=OFF \
-    -D BUILD_EXAMPLES:BOOL=OFF \
-    -D VTK_DATA_ROOT:FILEPATH=$tmpdir/VTKData$pkgver \
-    -D VTK_USE_SYSTEM_HDF5:BOOL=ON \
-    -D VTK_USE_SYSTEM_TIFF:BOOL=ON \
-    -D VTK_USE_SYSTEM_PNG:BOOL=ON \
-    -D VTK_USE_SYSTEM_ZLIB:BOOL=ON \
-    -D VTK_USE_QT:BOOL=ON \
-    -D VTK_USE_GUISUPPORT:BOOL=ON \
-    -D VTK_USE_COCOA:BOOL=ON \
-    -D VTK_WRAP_PYTHON:BOOL=ON \
-    -D VTK_USE_PARALLEL:BOOL=ON \
-    -D VTK_USE_PATENTED:BOOL=ON \
-    ..
-  popd
+    export HDF5_ROOT=/usr/local
+    export CC=mpicc
+    export CXX=mpic++
+
+    cmake \
+        -Wno-dev \
+        -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+        -D BUILD_SHARED_LIBS:BOOL=ON \
+        -D BUILD_TESTING:BOOL=OFF \
+        -D BUILD_EXAMPLES:BOOL=OFF \
+        -D VTK_DATA_ROOT:FILEPATH=$tmpdir/VTKData$pkgver \
+        -D VTK_USE_SYSTEM_HDF5:BOOL=ON \
+        -D VTK_USE_SYSTEM_TIFF:BOOL=ON \
+        -D VTK_USE_SYSTEM_PNG:BOOL=ON \
+        -D VTK_USE_SYSTEM_ZLIB:BOOL=ON \
+        -D VTK_USE_QT:BOOL=ON \
+        -D VTK_USE_GUISUPPORT:BOOL=ON \
+        -D VTK_USE_COCOA:BOOL=ON \
+        -D VTK_WRAP_PYTHON:BOOL=ON \
+        -D VTK_USE_PARALLEL:BOOL=ON \
+        -D VTK_USE_PATENTED:BOOL=ON \
+        ..
+
+    popd
 }
 
 build()
@@ -79,8 +86,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-build
-package
-#clean

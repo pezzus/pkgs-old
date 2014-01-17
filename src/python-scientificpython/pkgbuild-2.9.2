@@ -1,39 +1,37 @@
 #!/bin/bash -e
 
 source $REPO/setenv
+export NETCDF_PREFIX=/usr/local
 
-pkgname=opencascade
-pkgver=dev
+pkgname=python-scientificpython
+pkgver=2.9.2
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/oce
+srcdir=$tmpdir/ScientificPython-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
+
+_baseurl=https://sourcesup.renater.fr/frs/download.php/4153
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  git clone https://github.com/tpaviot/oce.git
+  curl -O -L $_baseurl/ScientificPython-${pkgver}.tar.gz
+  tar xvfz ScientificPython-${pkgver}.tar.gz
   popd
 }
 
 configure()
 {
-  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
-  mkdir -pv $srcdir/build && pushd $srcdir/build
-
-  cmake \
-    -D OCE_INSTALL_PREFIX:PATH=$destdir \
-    -D OCE_DRAW:BOOL=ON \
-    ../
- 
+  pushd $srcdir
+  python setup.py config
   popd
 }
 
 build()
 {
-  pushd $srcdir/build
-  make -j8
+  pushd $srcdir
+  python setup.py build
   popd
 }
 
@@ -42,17 +40,16 @@ package()
   # remove old installation
   [ -d $destdir ] && rm -rfv $destdir
   # install new one
-  pushd $srcdir/build
+  pushd $srcdir
   _pythonver=`python -c 'import sys; print("%d.%d" % sys.version_info[:2])'`
   mkdir -pv $destdir/lib/python$_pythonver/site-packages
   export PYTHONPATH=$destdir/lib/python$_pythonver/site-packages:$PYTHONPATH
-  make install
+  python setup.py install --prefix=$destdir --optimize=1
   popd
   pushd $destdir
   cat << EOF > setenv
-export OCE_DIR=\$REPO/$reldir
-PATH=\$OCE_DIR/bin:\$PATH
-DYLD_LIBRARY_PATH=\$OCE_DIR/lib:\$DYLD_LIBRARY_PATH
+PATH=\$REPO/$reldir/bin:\$PATH
+PYTHONPATH=\$REPO/$reldir/lib/python$_pythonver/site-packages:\$PYTHONPATH
 EOF
   popd
 }

@@ -1,37 +1,35 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+
 pkgname=python-petsc4py
-pkgver=dev
+pkgver=3.4
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/petsc4py
+srcdir=$tmpdir/petsc4py-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
-  mkdir -pv $tmpdir && pushd $tmpdir
-  if [ -d petsc4py ]; then
-    cd petsc4py
-    git pull
-  else
-    git clone git@bitbucket.org:mapdes/petsc4py.git
-  fi
-  popd
+    mkdir -pv $tmpdir && pushd $tmpdir
+    curl -L -O https://bitbucket.org/petsc/petsc4py/downloads/petsc4py-${pkgver}.tar.gz
+    tar xvfz petsc4py-${pkgver}.tar.gz
+    popd
 }
 
 configure()
 {
-  pushd $srcdir
-  python setup.py config
-  popd
+    pushd $srcdir
+    python setup.py config
+    popd
 }
 
 build()
 {
-  pushd $srcdir
-  python setup.py build
-  popd
+    pushd $srcdir
+    python setup.py build
+    popd
 }
 
 package()
@@ -58,8 +56,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-#clean

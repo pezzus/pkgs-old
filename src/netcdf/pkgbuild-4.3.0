@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+source $REPO/setenv
+export HDF5_DIR=/usr/local
 
 pkgname=netcdf
 pkgver=4.3.0
@@ -14,7 +14,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-${pkgver}.tar.gz
+  curl -O -L http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -31,8 +31,8 @@ configure()
     --prefix=$destdir \
     --enable-shared \
     --enable-netcdf-4 \
-    CPPFLAGS="-I$ZLIB_DIR/include -I$HDF5_DIR/include" \
-    LDFLAGS="-L$ZLIB_DIR/lib -L$HDF5_DIR/lib"
+    CPPFLAGS="-I$HDF5_DIR/include" \
+    LDFLAGS="-L$HDF5_DIR/lib"
     
   popd
 }
@@ -54,10 +54,10 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-NETCDF_DIR=\$REPO/$reldir
+export NETCDF_DIR=\$REPO/$reldir
 PATH=\$NETCDF_DIR/bin:\$PATH
 MANPATH=\$NETCDF_DIR/share/man:\$MANPATH
-LD_LIBRARY_PATH=\$NETCDF_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$NETCDF_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF
   popd
 }
@@ -67,8 +67,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-build
-package
-clean

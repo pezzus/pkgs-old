@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+
 pkgname=mumps
 pkgver=4.10.0
 
@@ -28,8 +30,8 @@ LPORDDIR  = \$(topdir)/PORD/lib
 IPORD     = -I\$(topdir)/PORD/include
 LPORD     = -L\$(LPORDDIR) -lpord
 
-IMETIS    = -I/usr/local/include
-LMETIS    = -L/usr/local/lib -lparmetis -lmetis
+IMETIS    = -I$METIS_DIR/include -I$PARMETIS_DIR/include
+LMETIS    = -L$METIS_DIR/lib -lmetis -L$PARMETIS_DIR/lib -lparmetis
 
 ORDERINGSF = -Dpord -Dparmetis -Dmetis -Dscotch -Dptscotch
 ORDERINGSC = \$(ORDERINGSF)
@@ -54,7 +56,7 @@ LIBPAR = \$(SCALAP)
 # See point 17 in the FAQ to have more details on the compilation of mpich with gfortran
 INCSEQ =
 LIBSEQ =
-LIBBLAS = -framework Accelerate
+LIBBLAS = -L$OPENBLAS_DIR/lib -lopenblas
 LIBOTHERS = -lm
 #Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
 CDEFS   = -DAdd_
@@ -105,7 +107,9 @@ package()
      -compatibility_version 4.10 \
      -current_version $pkgver \
      -Wl,-all_load libmumps_common.a \
-     -L. -lpord -L/usr/local/lib -lparmetis -lmetis \
+     -L. -lpord \
+     -L$METIS_DIR/lib -lmetis \
+     -L$PARMETIS_DIR/lib -lparmetis \
      -L$SCOTCH_DIR/lib -lptscotch -lptesmumps \
      -o libmumps_common.dylib.$pkgver
   ln -svf libmumps_common.dylib.$pkgver libmumps_common.dylib
@@ -118,10 +122,11 @@ package()
        -compatibility_version 4.10 \
        -current_version $pkgver \
        -Wl,-all_load lib${tt}mumps.a \
-       -L. -lmumps_common -L$SCALAPACK_DIR/lib -lscalapack \
+       -L. -lmumps_common \
+       -L$SCALAPACK_DIR/lib -lscalapack \
        -L$SCOTCH_DIR/lib -lptscotch -lptesmumps -lscotch \
-       -L/usr/local/lib -lmetis \
-       -framework Accelerate \
+       -L$METIS_DIR/lib -lmetis \
+       -L$OPENBLAS_DIR/lib -lopenblas \
        -o lib${tt}mumps.dylib.$pkgver
     ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib
     ln -svf lib${tt}mumps.dylib.$pkgver lib${tt}mumps.dylib.4
@@ -144,8 +149,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

@@ -1,12 +1,6 @@
---- support/shobj-conf.orig	2013-08-14 09:48:22.000000000 +0200
-+++ support/shobj-conf	2013-08-14 09:51:17.000000000 +0200
-@@ -163,13 +163,13 @@
- 	
- 	SHOBJ_CFLAGS='-fno-common'
- 
--	SHOBJ_LD='MACOSX_DEPLOYMENT_TARGET=10.3 ${CC}'
-+	SHOBJ_LD='${CC}'
- 
+--- support/shobj-conf	2013-12-19 22:16:15.000000000 +0100
++++ support/shobj-conf.orig	2013-12-19 22:22:36.000000000 +0100
+@@ -170,8 +170,8 @@
  	SHLIB_LIBVERSION='$(SHLIB_MAJOR)$(SHLIB_MINOR).$(SHLIB_LIBSUFF)'
  	SHLIB_LIBSUFF='dylib'
  

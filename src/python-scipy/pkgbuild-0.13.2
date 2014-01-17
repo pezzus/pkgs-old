@@ -2,49 +2,50 @@
 
 # deps
 source $REPO/setenv
+export PYTHONPATH
 
 # FIXME AVX supported but ambiguous compilation
 #export CFLAGS="-O3 -mtune=native -mno-avx"
 #export FFLAGS="-O3 -mtune=native -mno-avx"
 
-pkgname=python-numpy
-pkgver=1.8.0
+pkgname=python-scipy
+pkgver=0.13.2
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/numpy-$pkgver
+srcdir=$tmpdir/scipy-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
-    mkdir -pv $tmpdir && pushd $tmpdir
-    curl -O -L http://downloads.sourceforge.net/numpy/numpy-${pkgver}.tar.gz
-    tar xvfz numpy-$pkgver.tar.gz
-    popd
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O -L http://downloads.sourceforge.net/scipy/scipy-${pkgver}.tar.gz
+  tar xvfz scipy-$pkgver.tar.gz
+  popd
 }
 
 configure()
 {
-    [ -d $srcdir/build ] && rm -rf $srcdir/build
-
     pushd $srcdir
     cat <<EOF > site.cfg
 [DEFAULT]
 library_dirs = $OPENBLAS_DIR/lib:$SUITESPARSE_DIR/lib
 include_dirs = $OPENBLAS_DIR/include:$SUITESPARSE_DIR/include
+
+[UMFPACK]
 EOF
 
     python setup.py build --help-fcompiler
     python setup.py config
-
+    
     popd
 }
 
 build()
 {
-    pushd $srcdir
-    python setup.py build
-    popd
+  pushd $srcdir
+  python setup.py build
+  popd
 }
 
 package()
@@ -60,9 +61,9 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-NUMPY_DIR=\$REPO/$reldir
-PATH=\$NUMPY_DIR/bin:\$PATH
-PYTHONPATH=\$NUMPY_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
+SCIPY_DIR=\$REPO/$reldir
+PATH=\$SCIPY_DIR/bin:\$PATH
+PYTHONPATH=\$SCIPY_DIR/lib/python$_pythonver/site-packages:\$PYTHONPATH
 EOF
   popd
 }

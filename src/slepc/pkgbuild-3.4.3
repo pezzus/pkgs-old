@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+export PATH
+
 pkgname=slepc
 pkgver=3.4.3
 
@@ -8,11 +11,13 @@ srcdir=$tmpdir/$pkgname-$pkgver
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
+_baseurl=http://www.grycap.upv.es/slepc/download/download.php?filename=
+
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  curl -L http://www.grycap.upv.es/slepc/download/download.php?filename=slepc-${pkgver}.tar.gz > slepc-$pkgver.tar.gz
-  tar xvfz $pkgname-$pkgver.tar.gz
+  curl -L ${_baseurl}slepc-${pkgver}.tar.gz > slepc-$pkgver.tar.gz
+  tar xvfz $pkgname-${pkgver}.tar.gz
   popd
 }
 
@@ -21,11 +26,11 @@ configure()
   pushd $srcdir
 
   ./configure \
-  --prefix=$destdir \
-  --download-blopex \
-  --with-arpack=1 \
-  --with-arpack-dir=/usr/local/lib
-  
+    --prefix=$destdir \
+    --download-blopex \
+    --with-arpack=1 \
+    --with-arpack-dir=$ARPACK_DIR/lib  
+
   popd
 }
 
@@ -43,7 +48,6 @@ package()
   # install new one
   pushd $srcdir
   make SLEPC_DIR=$srcdir  PETSC_ARCH=arch-installed-petsc install
-  #make SLEPC_DIR=$destdir PETSC_ARCH=arch-installed-petsc test
   popd
   pushd $destdir
   cat << EOF > setenv
@@ -59,8 +63,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

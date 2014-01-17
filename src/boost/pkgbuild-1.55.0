@@ -1,0 +1,109 @@
+#!/bin/bash -e
+
+source $REPO/opt/gcc-4.8.2/setenv
+source $REPO/opt/openmpi-1.7.3/setenv
+source $REPO/opt/icu-52.1/setenv
+export PATH
+export DYLD_LIBRARY_PATH
+
+#export CXXFLAGS="-O3 -mtune=native -fno-strict-aliasing -Wa,-q"
+
+pkgname=boost
+pkgver=1.55.0
+_boostver=${pkgver//./_} 
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/${pkgname}_${_boostver}
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O -L http://downloads.sourceforge.net/${pkgname}/${pkgname}_${_boostver}.tar.gz
+  tar xvfz ${pkgname}_${_boostver}.tar.gz
+  popd
+}
+
+configure()
+{
+    pushd $srcdir
+  
+    echo "using darwin ;" >> ./tools/build/v2/user-config.jam
+    echo "using mpi ;" >> ./tools/build/v2/user-config.jam
+
+    ./bootstrap.sh \
+	    --with-toolset=darwin \
+	    --with-icu=$ICU_DIR \
+	    --with-python=/usr/local/bin/python
+
+    popd
+}
+
+build()
+{
+    pushd $srcdir
+    popd
+}
+
+package()
+{
+    # remove old installation
+    [ -d $destdir ] && rm -rfv $destdir
+
+    # install new one
+    pushd $srcdir
+
+    _bindir="bin.macosxx86_64"
+    install -d -m 755 $destdir/bin
+    install $srcdir/tools/build/v2/engine/${_bindir}/b2 $destdir/bin/b2
+
+    pushd tools
+    for _tool in bcp inspect quickbook compiler_status process_jam_log wave; do
+        $destdir/bin/b2 \
+            --toolset=darwin \
+            cflags="${CXXFLAGS} ${CFLAGS} -std=gnu++11 -O3" \
+            $_tool
+    done
+    $destdir/bin/b2 -\
+        -toolset=darwin \
+        cflags="${CXXFLAGS} ${CFLAGS} -O3" \
+        library_status
+    popd
+
+    cp -a dist/bin/* $destdir/bin
+
+    # boostbook is needed by quickbook
+    install -d -m 755 $destdir/share/boostbook
+    cp -a tools/boostbook/{xsl,dtd} $destdir/share/boostbook/
+
+    $destdir/bin/b2 \
+        variant=release \
+        debug-symbols=off \
+        threading=multi \
+        runtime-link=shared \
+        link=shared \
+        toolset=darwin \
+        python=2.7 \
+        cflags="${CXXFLAGS} ${CFLAGS} -O3" \
+        --layout=system \
+        --prefix=$destdir \
+        -j 8 \
+        install
+
+    popd
+
+    pushd $destdir
+    cat << EOF > setenv
+export BOOST_DIR=\$REPO/$reldir
+PATH=\$BOOST_DIR/bin:\$PATH
+DYLD_LIBRARY_PATH=\$BOOST_DIR/lib:\$DYLD_LIBRARY_PATH
+EOF
+    popd
+}
+
+clean()
+{
+    rm -rfv $tmpdir
+}
+

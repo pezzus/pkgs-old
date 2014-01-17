@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# deps
+source $REPO/setenv
+
 pkgname=scalapack
 pkgver=2.0.2
 
@@ -24,8 +27,8 @@ configure()
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D BUILD_SHARED_LIBS:BOOL=ON \
-    -D LAPACK_LIBRARIES:STRING="-framework Accelerate" \
-    -D BLAS_LIBRARIES:STRING="-framework Accelerate" \
+    -D LAPACK_LIBRARIES:STRING="-L$OPENBLAS_DIR/lib -lopenblas" \
+    -D BLAS_LIBRARIES:STRING="-L$OPENBLAS_DIR/lib -lopenblas" \
     ..
   popd
 }

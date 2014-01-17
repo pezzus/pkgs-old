@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+source $REPO/setenv
+
 pkgname=vtk
 pkgver=6.0.0
 
@@ -23,8 +25,9 @@ configure()
   [[ -d $srcdir/build ]] && rm -rf $srcdir/build
   mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  CXX=mpic++ \
-  CC=mpicc \
+  export CXX=mpic++
+  export CC=mpicc
+
   cmake \
     -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
     -D BUILD_SHARED_LIBS:BOOL=ON \
@@ -50,11 +53,11 @@ build()
 package()
 {
   # remove old installation
-  #[ -d $destdir ] && rm -rfv $destdir
+  [ -d $destdir ] && rm -rfv $destdir
   # install new one
-  #pushd $srcdir/build
-  #make install
-  #popd
+  pushd $srcdir/build
+  make install
+  popd
   pushd $destdir
   cat << EOF > setenv
 export VTK_DIR=\$REPO/$reldir
@@ -68,9 +71,3 @@ clean()
 {
   rm -rfv $tmpdir
 }
-
-#prepare
-#configure
-#build
-package
-#clean

@@ -21,25 +21,26 @@ prepare()
 
 configure()
 {
-  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
-  mkdir -pv $srcdir/build && pushd $srcdir/build
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  ../configure \
-    --build="x86_64-apple-darwin12.4.0" \
-    --prefix=$destdir \
-    --libdir=$destdir/lib \
-    --includedir=$destdir/include \
-    --oldincludedir=$destdir/include \
-    --disable-dependency-tracking
+    ../configure \
+        CC=$LOCALGCC/bin/gcc \
+        --build="x86_64-apple-darwin12.4.0" \
+        --prefix=$destdir \
+        --libdir=$destdir/lib \
+        --includedir=$destdir/include \
+        --oldincludedir=$destdir/include \
+        --disable-dependency-tracking
 
-  popd
+    popd
 }
 
 build()
 {
-  pushd $srcdir/build
-  make
-  popd
+    pushd $srcdir/build
+    make
+    popd
 }
 
 package()
@@ -72,8 +73,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

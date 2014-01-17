@@ -3,18 +3,17 @@
 source $REPO/setenv
 
 pkgname=gmsh
-pkgver=2.8.3
+pkgver=dev
 
 tmpdir=$REPO/tmp/$pkgname
-srcdir=$tmpdir/gmsh-$pkgver-source
+srcdir=$tmpdir/gmsh
 reldir=opt/$pkgname-$pkgver
 destdir=$REPO/$reldir
 
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  curl -O -L http://geuz.org/gmsh/src/gmsh-$pkgver-source.tgz
-  tar xvfz gmsh-$pkgver-source.tgz
+  svn co https://geuz.org/svn/gmsh/trunk gmsh
   popd
 }
 

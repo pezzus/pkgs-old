@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+source $REPO/opt/gcc-4.8.2/setenv
+export PATH
 
 pkgname=icu
-pkgver=51.2
+pkgver=52.1
 _pkgver=${pkgver//./_}
 tmpdir=$REPO/tmp/$pkgname
 srcdir="$tmpdir/$pkgname/source"
@@ -14,20 +14,24 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N "http://download.icu-project.org/files/icu4c/${pkgver}/icu4c-${_pkgver}-src.tgz"
+  curl -O -L "http://download.icu-project.org/files/icu4c/${pkgver}/icu4c-${_pkgver}-src.tgz"
   tar xvfz icu4c-${_pkgver}-src.tgz
   popd
 }
 
 configure()
 {
-  mkdir -pv $srcdir/build && pushd $srcdir/build
+    [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  ../configure \
-    --prefix=$destdir \
-    --mandir=$destdir/share/man \
-    --sbindir=$destdir/bin
-  popd
+    ../configure \
+        CC=gcc \
+        CXX=g++ \
+        --prefix=$destdir \
+        --mandir=$destdir/share/man \
+        --sbindir=$destdir/bin
+
+    popd
 }
 
 build()
@@ -47,10 +51,10 @@ package()
   popd
   pushd $destdir
   cat << EOF > setenv
-ICU_DIR=\$REPO/$reldir
+export ICU_DIR=\$REPO/$reldir
 PATH=\$ICU_DIR/bin:\$PATH
 MANPATH=\$ICU_DIR/share/man:\$MANPATH
-LD_LIBRARY_PATH=\$ICU_DIR/lib:\$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=\$ICU_DIR/lib:\$DYLD_LIBRARY_PATH
 PKG_CONFIG_PATH=\$ICU_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
 EOF
   popd
@@ -61,8 +65,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

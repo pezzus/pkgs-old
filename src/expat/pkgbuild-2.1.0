@@ -18,18 +18,21 @@ prepare()
 
 configure()
 {
-  mkdir -pv $srcdir/build && pushd $srcdir/build
+    mkdir -pv $srcdir/build && pushd $srcdir/build
 
-  ../configure \
-    --prefix=$destdir
-  popd
+    ../configure \
+        CC=$LOCALGCC/bin/gcc \
+        CXX=$LOCALGCC/bin/g++ \
+        --prefix=$destdir
+  
+    popd
 }
 
 build()
 {
-  pushd $srcdir/build
-  make
-  popd
+    pushd $srcdir/build
+    make
+    popd
 }
 
 package()
@@ -56,8 +59,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-prepare
-configure
-build
-package
-clean

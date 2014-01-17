@@ -1,10 +1,13 @@
 #!/bin/bash -e
 
-REPO=/data/scratch/simone/repo
-source $REPO/setenv > /dev/null
+# deps
+source $REPO/setenv
+
+export CFLAGS="-O3 -mtune=native -fno-strict-aliasing -Wa,-q"
+export CXXLAGS="-O3 -mtune=native -fno-strict-aliasing -Wa,-q"
 
 pkgname=swig
-pkgver=2.0.10
+pkgver=2.0.11
 
 tmpdir=$REPO/tmp/$pkgname
 srcdir=$tmpdir/$pkgname-$pkgver
@@ -14,7 +17,7 @@ destdir=$REPO/$reldir
 prepare()
 {
   mkdir -pv $tmpdir && pushd $tmpdir
-  wget -N http://downloads.sourceforge.net/${pkgname}/${pkgname}-${pkgver}.tar.gz
+  curl -O -L http://downloads.sourceforge.net/${pkgname}/${pkgname}-${pkgver}.tar.gz
   tar xvfz $pkgname-$pkgver.tar.gz
   popd
 }
@@ -23,8 +26,6 @@ configure()
 {
   # out of source doesn't work
   pushd $srcdir
-  CPPFLAGS="-I$ZLIB_DIR" \
-  LDFLAGS="-L$ZLIB_DIR" \
   ./configure \
     --prefix=$destdir \
     --with-pcre-prefix=$PCRE_DIR \
@@ -64,8 +65,3 @@ clean()
   rm -rfv $tmpdir
 }
 
-#prepare
-#configure
-#build
-package
-#clean
