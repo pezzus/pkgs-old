@@ -25,6 +25,7 @@ configure()
   cmake \
     -D OCE_INSTALL_PREFIX:PATH=$destdir \
     -D OCE_DRAW:BOOL=ON \
+    -D OCE_MULTITHREAD_LIBRARY:STRING="TBB" \
     ../
  
   popd
@@ -51,6 +52,7 @@ package()
   pushd $destdir
   cat << EOF > setenv
 export OCE_DIR=\$REPO/$reldir
+export CASROOT=\$OCE_DIR
 PATH=\$OCE_DIR/bin:\$PATH
 DYLD_LIBRARY_PATH=\$OCE_DIR/lib:\$DYLD_LIBRARY_PATH
 EOF

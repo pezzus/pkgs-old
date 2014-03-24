@@ -10,7 +10,6 @@ contains_elm()
 }
 
 REPO=$HOME/fenics/pkgs
-LOCALGCC=$REPO/opt/gcc-4.8.2
 
 pkgsource="$REPO/src/$1/pkgbuild-$2"
 

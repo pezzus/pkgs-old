@@ -1,0 +1,61 @@
+#!/bin/bash -e
+
+pkgname=swig
+pkgver=dev
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  git clone https://github.com/swig/swig.git
+  popd
+}
+
+configure()
+{
+  # out of source doesn't work
+  pushd $srcdir
+  ./autogen.sh
+  ./configure \
+    --prefix=$destdir \
+    --with-pcre-prefix=$PCRE_DIR \
+    --with-boost=$BOOST_DIR \
+    --without-{java,perl5}
+  popd
+}
+
+build()
+{
+  pushd $srcdir
+  make
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir
+  make install || true
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+SWIG_DIR=\$REPO/$reldir
+PATH=\$SWIG_DIR/bin:\$PATH
+MANPATH=\$SWIG_DIR/share/man:\$MANPATH
+LD_LIBRARY_PATH=\$SWIG_DIR/lib:\$LD_LIBRARY_PATH
+PKG_CONFIG_PATH=\$SWIG_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

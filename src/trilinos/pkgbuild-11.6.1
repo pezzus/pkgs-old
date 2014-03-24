@@ -1,0 +1,120 @@
+#!/bin/bash -e
+
+# deps
+source $REPO/setenv
+export HDF5_DIR=/usr/local
+
+pkgname=trilinos
+pkgver=11.6.1
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/$pkgname-$pkgver-Source
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  curl -O http://trilinos.sandia.gov/download/files/${pkgname}-${pkgver}-Source.tar.bz2
+  tar xvfj $pkgname-$pkgver-Source.tar.bz2
+  popd
+}
+
+configure()
+{
+  [[ -d $srcdir/build ]] && rm -rf $srcdir/build
+  mkdir -pv $srcdir/build && pushd $srcdir/build
+
+  cmake \
+    -D CMAKE_INSTALL_PREFIX:PATH=$destdir \
+    -D BUILD_SHARED_LIBS:BOOL=ON \
+    -D Trilinos_ENABLE_PyTrilinos:BOOL=ON \
+    -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=ON \
+    -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=ON \
+    -D ML_ENABLE_MLapi:BOOL=ON \
+    -D TPL_ENABLE_MPI:BOOL=ON \
+    -D TPL_ENABLE_Zlib:BOOL=ON \
+    -D TPL_ENABLE_Pthread:BOOL=ON \
+    -D TPL_ENABLE_BLAS:BOOL=ON \
+    -D BLAS_LIBRARY_DIRS:PATH="$OPENBLAS_DIR/lib" \
+    -D BLAS_INCLUDE_DIRS:PATH="$OPENBLAS_DIR/include" \
+    -D BLAS_LIBRARY_NAMES:STRING="openblas" \
+    -D TPL_ENABLE_LAPACK:BOOL=ON \
+    -D LAPACK_LIBRARY_DIRS:PATH="$OPENBLAS_DIR/lib" \
+    -D LAPACK_INCLUDE_DIRS:PATH="$OPENBLAS_DIR/include" \
+    -D LAPACK_LIBRARY_NAMES:STRING="openblas" \
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D Boost_LIBRARY_DIRS:PATH="$BOOST_DIR/lib" \
+    -D Boost_INCLUDE_DIRS:PATH="$BOOST_DIR/include" \
+    -D TPL_ENABLE_HDF5:BOOL=ON \
+    -D HDF5_LIBRARY_DIRS:PATH="$HDF5_DIR/lib" \
+    -D HDF5_INCLUDE_DIRS:PATH="$HDF5_DIR/include" \
+    -D TPL_ENABLE_METIS:BOOL=ON \
+    -D METIS_LIBRARY_DIRS:PATH="$METIS_DIR/lib" \
+    -D METIS_INCLUDE_DIRS:PATH="$METIS_DIR/include" \
+    -D TPL_ENABLE_ParMETIS:BOOL=ON \
+    -D ParMETIS_LIBRARY_DIRS:PATH="$PARMETIS_DIR/lib" \
+    -D ParMETIS_INCLUDE_DIRS:PATH="$PARMETIS_DIR/include" \
+    -D ParMETIS_LIBRARY_NAMES:STRING="parmetis" \
+    -D TPL_ENABLE_UMFPACK:BOOL=ON \
+    -D UMFPACK_LIBRARY_DIRS:PATH=$SUITESPARSE_DIR/lib \
+    -D UMFPACK_INCLUDE_DIRS:PATH=$SUITESPARSE_DIR/include \
+    -D TPL_ENABLE_AMD:BOOL=ON \
+    -D AMD_LIBRARY_DIRS:PATH=$SUITESPARSE_DIR/lib \
+    -D AMD_INCLUDE_DIRS:PATH=$SUITESPARSE_DIR/include \
+    -D TPL_ENABLE_Scotch:BOOL=ON \
+    -D Scotch_LIBRARY_DIRS:PATH=$SCOTCH_DIR/lib \
+    -D Scotch_INCLUDE_DIRS:PATH=$SCOTCH_DIR/include \
+    -D Scotch_LIBRARY_NAMES:STRING="ptesmumps;esmumps;ptscotch;scotch;ptscotcherr;scotcherr" \
+    -D TPL_ENABLE_SCALAPACK:BOOL=ON \
+    -D SCALAPACK_LIBRARY_DIRS:PATH=$SCALAPACK_DIR/lib \
+    -D SCALAPACK_LIBRARY_NAMES:STRING="scalapack" \
+    -D SCALAPACK_INCLUDE_DIRS:PATH=$SCALAPACK_DIR/include \
+    -D TPL_ENABLE_MUMPS:BOOL=ON \
+    -D MUMPS_LIBRARY_DIRS:PATH=$MUMPS_DIR/lib \
+    -D MUMPS_INCLUDE_DIRS:PATH=$MUMPS_DIR/include \
+    -D MUMPS_LIBRARY_NAMES:STRING="dmumps;mumps_common;pord" \
+    -D TPL_ENABLE_HYPRE:BOOL=ON \
+    -D HYPRE_LIBRARY_DIRS:PATH=$HYPRE_DIR/lib \
+    -D HYPRE_INCLUDE_DIRS:PATH=$HYPRE_DIR/include \
+    -D TPL_ENABLE_SuperLU:BOOL=ON \
+    -D SuperLU_LIBRARY_DIRS:PATH=$SUPERLU_DIR/lib \
+    -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLU_DIR/include \
+    -D TPL_ENABLE_SuperLUDist:BOOL=ON \
+    -D SuperLUDist_LIBRARY_DIRS:PATH=$SUPERLUDIST_DIR/lib \
+    -D SuperLUDist_INCLUDE_DIRS:PATH=$SUPERLUDIST_DIR/include \
+    -D PYTHON_LIBRARY:PATH="/usr/local/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib" \
+    ..
+
+    popd
+}
+
+build()
+{
+  pushd $srcdir/build
+  make -j8
+  popd
+}
+
+package()
+{
+  # remove old installation
+  [ -d $destdir ] && rm -rfv $destdir
+  # install new one
+  pushd $srcdir/build
+  make install
+  popd
+  pushd $destdir
+  cat << EOF > setenv
+export TRILINOS_DIR=\$REPO/$reldir
+DYLD_LIBRARY_PATH=\$TRILINOS_DIR/lib:\$DYLD_LIBRARY_PATH
+PYTHONPATH=\$TRILINOS_DIR/lib/python2.7/site-packages:\$PYTHONPATH
+EOF
+  popd
+}
+
+clean()
+{
+  rm -rfv $tmpdir
+}
+

@@ -4,7 +4,7 @@ export REPO=$HOME/fenics/pkgs
 
 setpkg()
 {
-  echo "Setting $1-$2 ..."
+  #echo "Setting $1-$2 ..."
   pkgdir=$REPO/opt/$1-$2
   if [ ! -d "$pkgdir" ]; then
     echo "!!! Package not found"
@@ -12,52 +12,6 @@ setpkg()
   fi
   source $pkgdir/setenv
 }
-
-#setpkg gcc 4.8.2
-#setpkg openmpi 1.7.3
-#setpkg hdf5 1.8.12
-#setpkg icu 52.1
-#setpkg boost 1.55.0
-
-# only for arpack
-setpkg openblas 0.2.8
-setpkg arpack 3.1.4
-
-setpkg metis 5.1.0
-setpkg suitesparse 4.2.1
-setpkg superlu 4.3
-
-setpkg python-numpy 1.8.0
-setpkg python-scipy 0.13.2
-
-setpkg parmetis 4.0.3
-setpkg superlu_dist 3.3
-setpkg scalapack 2.0.2
-setpkg scotch 6.0.0
-setpkg mumps 4.10.0
-setpkg hypre 2.9.1a
-setpkg pastix 5.2.2
-
-setpkg trilinos 11.4.3
-
-setpkg python-scientificpython 2.9.2
-
-setpkg petsc 3.4.3
-setpkg python-petsc4py 3.4
-setpkg slepc 3.4.3
-#setpkg tao 2.2.0
-
-setpkg vtk 6.0.0
-setpkg opencascade dev
-setpkg gmsh dev
-#setpkg gmsh 2.8.3
-
-setpkg python-ufl dev
-setpkg python-uflacs dev
-setpkg python-ffc dev
-setpkg python-fiat dev
-setpkg python-instant dev
-setpkg python-ufc dev
 
 # CUDA
 export PATH=$PATH:/usr/local/cuda/bin

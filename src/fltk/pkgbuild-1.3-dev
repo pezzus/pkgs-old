@@ -1,0 +1,57 @@
+#!/bin/bash -e
+
+source $REPO/setenv
+
+pkgname=fltk
+pkgver=1.3-dev
+
+tmpdir=$REPO/tmp/$pkgname
+srcdir=$tmpdir/fltk-1.3
+reldir=opt/$pkgname-$pkgver
+destdir=$REPO/$reldir
+
+prepare()
+{
+  mkdir -pv $tmpdir && pushd $tmpdir
+  svn co http://seriss.com/public/fltk/fltk/branches/branch-1.3/ fltk-1.3
+  popd
+}
+
+configure()
+{
+    pushd $srcdir
+    ./autogen.sh
+    ./configure --prefix=$destdir --enable-shared --enable-threads
+    popd
+}
+
+build()
+{
+    pushd $srcdir
+    make -j5
+    popd
+}
+
+package()
+{
+    # remove old installation
+    [ -d $destdir ] && rm -rfv $destdir
+    # install new one
+    pushd $srcdir
+    make install
+    popd
+    pushd $destdir
+    cat << EOF > setenv
+export FLTK_DIR=\$REPO/$reldir
+PATH=\$FLTK_DIR/bin:\$PATH
+PKG_CONFIG_PATH=\$FLTK_DIR/lib/pkgconfig:\$PKG_CONFIG_PATH
+DYLD_LIBRARY_PATH=\$FLTK_DIR/lib:\$DYLD_LIBRARY_PATH
+EOF
+    popd
+}
+
+clean()
+{
+    rm -rfv $tmpdir
+}
+
